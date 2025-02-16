@@ -1,0 +1,33 @@
+syntax="proto3";
+
+package file;
+
+option go_package = "/file";
+
+import "idl/google/api/annotations.proto";
+
+message FileMetaData {
+  string name = 1;
+  string size = 2;
+  string hash = 3;
+  string content_type = 4;
+}
+
+message UploadRequest {
+  FileMetaData metadata = 1;
+  bytes data = 2;
+}
+
+message UploadResponse {
+  int32 id = 1;
+  string url = 2;
+}
+
+service FileService {
+  rpc Upload(UploadRequest) returns (UploadResponse) {
+    option (google.api.http) = {
+      post: "/api/file/upload"
+      body: "*"
+    };
+  }
+}

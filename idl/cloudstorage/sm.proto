@@ -1,0 +1,33 @@
+syntax="proto3";
+
+package sm;
+
+option go_package = "/sm";
+
+message SendSmRequest {
+  string phone = 1;
+  string biz = 2;
+}
+
+message SendSmResponse {
+  int32 code = 1;
+  string msg = 2;
+}
+
+message VerifySmRequest {
+  string biz = 1;
+  string phone = 2;
+  string code = 3;
+}
+
+message VerifySmResponse {
+  int32 code = 1;
+  string msg = 2;
+}
+
+service ShortMsgService {
+  rpc SendSm(SendSmRequest) returns (SendSmResponse);
+  rpc VerifySm(VerifySmRequest) returns (VerifySmResponse);
+}
+
+

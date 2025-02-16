@@ -1,0 +1,47 @@
+syntax="proto3";
+
+package user;
+
+option go_package = "/user";
+
+import "idl/google/api/annotations.proto";
+
+message User {
+  int32 id = 1;
+  string name = 2;
+  string phone = 3;
+  string avatar = 4;
+}
+
+message SendCodeRequest {
+  string phone = 1;
+}
+
+message SendCodeResponse {
+  string biz = 1;
+}
+
+message VerifyCodeRequest {
+  string phone = 1;
+  string code = 2;
+  string biz = 3;
+}
+
+message VerifyCodeResponse {
+  string token = 1;
+}
+
+service UserService {
+  rpc SendCode(SendCodeRequest) returns (SendCodeResponse) {
+    option (google.api.http) = {
+      post: "/api/user/send-code"
+      body: "*"
+    };
+  }
+  rpc VerifyCode(VerifyCodeRequest) returns (VerifyCodeResponse) {
+    option (google.api.http) = {
+      post: "/api/user/verify-code"
+      body: "*"
+    };
+  }
+}
