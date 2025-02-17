@@ -1,11 +1,11 @@
-package common
+package consts
 
 import (
 	"github.com/crazyfrankie/gem/gerrors"
 )
 
 const (
-	BaseURL = "https://cloud.crazyfrank.top/file/"
+	BasePath = "D:/Gocode/cloudstorage/"
 )
 
 var (

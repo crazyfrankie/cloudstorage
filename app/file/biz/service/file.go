@@ -2,86 +2,61 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"io"
-	"mime/multipart"
-	"path"
-	"strconv"
+	"os"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/file/mws"
+	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 )
 
-type FileService struct {
+type FileServer struct {
 	repo  *repository.UploadRepo
 	minio *mws.MinioServer
+	file.UnimplementedFileServiceServer
 }
 
-func NewFileService(repo *repository.UploadRepo, minio *mws.MinioServer) *FileService {
-	return &FileService{repo: repo, minio: minio}
+func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer) *FileServer {
+	return &FileServer{repo: repo, minio: minio}
 }
 
-func (s *FileService) UploadFile(ctx context.Context, header *multipart.FileHeader, parentFold, storeId int64) (*dao.File, error) {
-	fileName := header.Filename
-	// 先查询文件名是否重复
-	exists, err := s.repo.QueryByName(ctx, fileName)
+func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file.UploadResponse, error) {
+	meta, data := req.GetMetadata(), req.GetData()
+
+	// 存到本地
+	newFile, err := os.Create(meta.Path)
 	if err != nil {
-		return &dao.File{}, err
+		return nil, err
 	}
-	if exists {
-		return &dao.File{}, err
-	}
-
-	file, err := header.Open()
+	_, err = newFile.Write(data)
+	newFile.Close()
 	if err != nil {
-		return &dao.File{}, err
-	}
-	defer file.Close()
-
-	hash := s.getHashFromFile(file)
-
-	exists, err = s.repo.QueryByHash(ctx, hash)
-
-	// 文件基本信息
-	suffix := path.Ext(fileName)
-	filePrefix := fileName[:len(fileName)-len(suffix)]
-	fileSize := header.Size
-
-	var sizeStr string
-	if fileSize < 1048576 {
-		sizeStr = strconv.FormatInt(fileSize/1024, 10) + "KB"
-	} else {
-		sizeStr = strconv.FormatInt(fileSize/102400, 10) + "MB"
+		return nil, err
 	}
 
-	newFile := &dao.File{
-		FileName:       filePrefix,
-		FileHash:       hash,
-		FileStoreId:    storeId,
-		ParentFolderId: parentFold,
-		Type:           suffix,
-		Size:           fileSize,
-		SizeStr:        sizeStr,
-	}
-	err = s.repo.CreateFile(ctx, newFile)
+	// 存 OSS
+	info, err := s.minio.PutToBucket(ctx, meta.Name, meta.Size, data)
 	if err != nil {
-		return &dao.File{}, err
+		return nil, err
 	}
 
-	//// TODO
-	//// 上传 OSS
+	// 存数据库
+	f := &dao.File{
+		Name: meta.Name,
+		Hash: meta.Hash,
+		Type: meta.ContentType,
+		Path: meta.Path,
+		Size: meta.Size,
+		URL:  info.Location,
+	}
 
-	return newFile, nil
-}
+	err = s.repo.CreateFile(ctx, f)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *FileService) getHashFromFile(file multipart.File) string {
-	hash := sha256.New()
-	_, _ = io.Copy(hash, file)
-
-	bytes := hash.Sum(nil)
-	hashCode := hex.EncodeToString(bytes)
-
-	return hashCode
+	return &file.UploadResponse{
+		Id:  int32(f.Id),
+		Url: info.Location,
+	}, nil
 }

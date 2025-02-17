@@ -7,6 +7,7 @@ replace github.com/crazyfrankie/cloudstorage/rpc_gen => ../../rpc_gen
 require (
 	github.com/crazyfrankie/cloudstorage/rpc_gen v0.0.0-00010101000000-000000000000
 	github.com/google/wire v0.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spf13/viper v1.19.0
 	go.etcd.io/etcd/client/v3 v3.5.12

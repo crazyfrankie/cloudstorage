@@ -8,16 +8,15 @@ import (
 )
 
 type File struct {
-	Id             int64  `gorm:"primaryKey,autoIncrement"`
-	FileName       string `gorm:"unique"`
-	FileHash       string
-	FileStoreId    int64
-	DownloadCount  int64
-	ParentFolderId int64
-	Type           string
-	Size           int64
-	SizeStr        string
-	Ctime          int64 `gorm:"index"`
+	Id    int64  `gorm:"primaryKey,autoIncrement"`
+	Name  string `gorm:"unique"`
+	Path  string
+	URL   string
+	Hash  string
+	Type  string
+	Size  int64
+	Ctime int64 `gorm:"index"`
+	Utime int64
 }
 
 type UploadDao struct {
@@ -37,7 +36,7 @@ func (d *UploadDao) CreateFile(ctx context.Context, file *File) error {
 
 func (d *UploadDao) QueryByName(ctx context.Context, name string) (bool, error) {
 	var file File
-	err := d.db.WithContext(ctx).Model(&File{}).Where("file_name = ?", name).First(&file).Error
+	err := d.db.WithContext(ctx).Model(&File{}).Where("name = ?", name).First(&file).Error
 	if err != nil {
 		return false, err
 	}
@@ -51,7 +50,7 @@ func (d *UploadDao) QueryByName(ctx context.Context, name string) (bool, error) 
 
 func (d *UploadDao) QueryByHash(ctx context.Context, hash string) (bool, error) {
 	var file File
-	err := d.db.WithContext(ctx).Model(&File{}).Where("file_hash = ?", hash).First(&file).Error
+	err := d.db.WithContext(ctx).Model(&File{}).Where("hash = ?", hash).First(&file).Error
 	if err != nil {
 		return false, err
 	}

@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	Id     int    `gorm:"primaryKey,autoIncrement"`
-	Name   string `gorm:"varchar(255)"`
+	Name   string `gorm:"unique;type:varchar(255)"`
 	Phone  string `gorm:"unique"`
 	Avatar string
 	Ctime  int64

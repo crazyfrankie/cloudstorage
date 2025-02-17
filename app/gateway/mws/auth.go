@@ -1,12 +1,11 @@
 package mws
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -34,27 +33,25 @@ func (b *AuthBuilder) IgnorePath(path string) *AuthBuilder {
 	return b
 }
 
-func (b *AuthBuilder) Auth(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := b.paths[r.URL.Path]; ok {
-			next.ServeHTTP(w, r)
+func (b *AuthBuilder) Auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if _, ok := b.paths[c.Request.URL.Path]; ok {
+			c.Next()
 			return
 		}
 
-		tokenHeader := r.Header.Get("Authorization")
+		tokenHeader := c.GetHeader("Authorization")
 		token := extractToken(tokenHeader)
 
 		claims, err := parseToken(token)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			_, _ = w.Write([]byte("Unauthorized"))
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		uid := strconv.Itoa(int(claims.UserId))
-		r = r.WithContext(context.WithValue(r.Context(), "user_id", uid))
+		c.Set("claims", claims)
 
-		next.ServeHTTP(w, r)
+		c.Next()
 	}
 }
 

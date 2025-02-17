@@ -1,22 +1,41 @@
 package api
 
 import (
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/client/v3/naming/resolver"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/gin-gonic/gin"
 
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
 )
 
-func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
-	builder, err := resolver.NewBuilder(cli)
-	conn, err := grpc.Dial("etcd:///service/user",
-		grpc.WithResolvers(builder),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		panic(err)
-	}
+type UserHandler struct {
+	cli user.UserServiceClient
+}
 
-	return user.NewUserServiceClient(conn)
+func NewUserHandler(cli user.UserServiceClient) *UserHandler {
+	return &UserHandler{cli: cli}
+}
+
+func (h *UserHandler) RegisterRoute(r *gin.Engine) {
+	userGroup := r.Group("api/user")
+	{
+		userGroup.POST("/send-code", h.SendCode())
+		userGroup.POST("/verify-code", h.VerifyCode())
+	}
+}
+
+func (h *UserHandler) SendCode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (h *UserHandler) VerifyCode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
+}
+
+func (h *UserHandler) GetUserInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+	}
 }

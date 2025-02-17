@@ -1,6 +1,7 @@
-package common
+package response
 
 import (
+	"github.com/crazyfrankie/cloudstorage/app/gateway/common/consts"
 	"net/http"
 
 	"github.com/crazyfrankie/gem/gerrors"
@@ -15,8 +16,8 @@ type Response struct {
 
 func Success(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, Response{
-		Code:    SuccessMsg.BizStatusCode(),
-		Message: SuccessMsg.BizMessage(),
+		Code:    consts.SuccessMsg.BizStatusCode(),
+		Message: consts.SuccessMsg.BizMessage(),
 		Data:    data,
 	})
 }
@@ -30,7 +31,7 @@ func Error(c *gin.Context, err error) {
 	}
 
 	c.JSON(http.StatusOK, Response{
-		Code:    InternalError.BizStatusCode(),
-		Message: InternalError.BizMessage(),
+		Code:    consts.InternalError.BizStatusCode(),
+		Message: consts.InternalError.BizMessage(),
 	})
 }

@@ -63,7 +63,7 @@ func initConfig() {
 
 func getEnv() string {
 	env := os.Getenv("GO_ENV")
-	if env != "" {
+	if env == "" {
 		return "test"
 	}
 

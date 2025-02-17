@@ -19,6 +19,7 @@ type Config struct {
 	Server Server `yaml:"server"`
 	Redis  Redis  `yaml:"redis"`
 	ETCD   ETCD   `yaml:"etcd"`
+	SMS    SMS    `yaml:"SMS"`
 }
 
 type Server struct {
@@ -27,6 +28,11 @@ type Server struct {
 
 type Redis struct {
 	Addr string `yaml:"addr"`
+}
+
+type SMS struct {
+	Secret     string `yaml:"secret"`
+	TemplateID string `yaml:"template_id"`
 }
 
 type ETCD struct {
@@ -59,7 +65,7 @@ func initConfig() {
 
 func getEnv() string {
 	env := os.Getenv("GO_ENV")
-	if env != "" {
+	if env == "" {
 		return "test"
 	}
 

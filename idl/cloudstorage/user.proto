@@ -4,8 +4,6 @@ package user;
 
 option go_package = "/user";
 
-import "idl/google/api/annotations.proto";
-
 message User {
   int32 id = 1;
   string name = 2;
@@ -32,16 +30,6 @@ message VerifyCodeResponse {
 }
 
 service UserService {
-  rpc SendCode(SendCodeRequest) returns (SendCodeResponse) {
-    option (google.api.http) = {
-      post: "/api/user/send-code"
-      body: "*"
-    };
-  }
-  rpc VerifyCode(VerifyCodeRequest) returns (VerifyCodeResponse) {
-    option (google.api.http) = {
-      post: "/api/user/verify-code"
-      body: "*"
-    };
-  }
+  rpc SendCode(SendCodeRequest) returns (SendCodeResponse);
+  rpc VerifyCode(VerifyCodeRequest) returns (VerifyCodeResponse);
 }

@@ -9,6 +9,7 @@ require (
 	github.com/crazyfrankie/gem v0.0.9
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/wire v0.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	go.etcd.io/etcd/client/v3 v3.5.18
 	google.golang.org/grpc v1.70.0

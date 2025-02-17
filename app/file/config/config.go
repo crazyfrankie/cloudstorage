@@ -18,8 +18,6 @@ type Config struct {
 	Env    string
 	Server Server `yaml:"server"`
 	MySQL  MySQL  `yaml:"mysql"`
-	Redis  Redis  `yaml:"redis"`
-	JWT    JWT    `yaml:"jwt"`
 	Minio  Minio  `yaml:"minio"`
 	ETCD   ETCD   `yaml:"etcd"`
 }
@@ -32,22 +30,15 @@ type MySQL struct {
 	DSN string `yaml:"dsn"`
 }
 
-type Redis struct {
-	Addr string `yaml:"addr"`
-}
-
-type JWT struct {
-	Secret string `yaml:"secret"`
-}
-
 type ETCD struct {
 	Addr string `yaml:"addr"`
 }
 
 type Minio struct {
-	EndPoint  string `yaml:"endPoint"`
-	AccessKey string `yaml:"access_key"`
-	SecretKey string `yaml:"secret_key"`
+	EndPoint   string   `yaml:"endPoint"`
+	AccessKey  string   `yaml:"accessKey"`
+	SecretKey  string   `yaml:"secretKey"`
+	BucketName []string `yaml:"bucketName"`
 }
 
 func GetConf() *Config {
@@ -76,7 +67,7 @@ func initConfig() {
 
 func getEnv() string {
 	env := os.Getenv("GO_ENV")
-	if env != "" {
+	if env == "" {
 		return "test"
 	}
 

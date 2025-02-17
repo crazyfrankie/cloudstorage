@@ -46,6 +46,8 @@ func InitDB() *gorm.DB {
 		panic(err)
 	}
 
+	db.AutoMigrate(&dao.User{})
+
 	return db
 }
 

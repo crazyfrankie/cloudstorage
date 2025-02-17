@@ -4,13 +4,12 @@ package file;
 
 option go_package = "/file";
 
-import "idl/google/api/annotations.proto";
-
 message FileMetaData {
   string name = 1;
-  string size = 2;
+  int64 size = 2;
   string hash = 3;
-  string content_type = 4;
+  string path = 4;
+  string content_type = 5;
 }
 
 message UploadRequest {
@@ -24,10 +23,5 @@ message UploadResponse {
 }
 
 service FileService {
-  rpc Upload(UploadRequest) returns (UploadResponse) {
-    option (google.api.http) = {
-      post: "/api/file/upload"
-      body: "*"
-    };
-  }
+  rpc Upload(UploadRequest) returns (UploadResponse);
 }
