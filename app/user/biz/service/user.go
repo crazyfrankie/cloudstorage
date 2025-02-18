@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
@@ -17,11 +18,12 @@ var (
 type UserServer struct {
 	repo *repository.UserRepo
 	sm   sm.ShortMsgServiceClient
+	file file.FileServiceClient
 	user.UnimplementedUserServiceServer
 }
 
-func NewUserServer(repo *repository.UserRepo, sm sm.ShortMsgServiceClient) *UserServer {
-	return &UserServer{repo: repo, sm: sm}
+func NewUserServer(repo *repository.UserRepo, sm sm.ShortMsgServiceClient, file file.FileServiceClient) *UserServer {
+	return &UserServer{repo: repo, sm: sm, file: file}
 }
 
 func (s *UserServer) SendCode(ctx context.Context, req *user.SendCodeRequest) (*user.SendCodeResponse, error) {
@@ -60,6 +62,11 @@ func (s *UserServer) VerifyCode(ctx context.Context, req *user.VerifyCodeRequest
 			Avatar: defaultAvatar,
 		}
 		err = s.repo.Create(ctx, u)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = s.file.CreateFileStore(ctx, &file.CreateFileStoreRequest{UserId: int32(u.Id)})
 		if err != nil {
 			return nil, err
 		}

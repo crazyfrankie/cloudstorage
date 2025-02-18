@@ -19,7 +19,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileService_Upload_FullMethodName = "/file.FileService/Upload"
+	FileService_Upload_FullMethodName          = "/file.FileService/Upload"
+	FileService_CreateFileStore_FullMethodName = "/file.FileService/CreateFileStore"
+	FileService_CreateFolder_FullMethodName    = "/file.FileService/CreateFolder"
+	FileService_ListFolder_FullMethodName      = "/file.FileService/ListFolder"
+	FileService_GetFile_FullMethodName         = "/file.FileService/GetFile"
+	FileService_Download_FullMethodName        = "/file.FileService/Download"
+	FileService_DownloadStream_FullMethodName  = "/file.FileService/DownloadStream"
+	FileService_MoveFolder_FullMethodName      = "/file.FileService/MoveFolder"
+	FileService_MoveFile_FullMethodName        = "/file.FileService/MoveFile"
+	FileService_DeleteFile_FullMethodName      = "/file.FileService/DeleteFile"
+	FileService_DeleteFolder_FullMethodName    = "/file.FileService/DeleteFolder"
+	FileService_Search_FullMethodName          = "/file.FileService/Search"
+	FileService_Preview_FullMethodName         = "/file.FileService/Preview"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -27,6 +39,18 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileServiceClient interface {
 	Upload(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
+	CreateFileStore(ctx context.Context, in *CreateFileStoreRequest, opts ...grpc.CallOption) (*CreateFileStoreResponse, error)
+	CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...grpc.CallOption) (*CreateFolderResponse, error)
+	ListFolder(ctx context.Context, in *ListFolderRequest, opts ...grpc.CallOption) (*ListFolderResponse, error)
+	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*GetFileResponse, error)
+	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error)
+	DownloadStream(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadStreamResponse], error)
+	MoveFolder(ctx context.Context, in *MoveFolderRequest, opts ...grpc.CallOption) (*MoveFolderResponse, error)
+	MoveFile(ctx context.Context, in *MoveFileRequest, opts ...grpc.CallOption) (*MoveFileResponse, error)
+	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
+	DeleteFolder(ctx context.Context, in *DeleteFolderRequest, opts ...grpc.CallOption) (*DeleteFolderResponse, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error)
 }
 
 type fileServiceClient struct {
@@ -47,11 +71,152 @@ func (c *fileServiceClient) Upload(ctx context.Context, in *UploadRequest, opts 
 	return out, nil
 }
 
+func (c *fileServiceClient) CreateFileStore(ctx context.Context, in *CreateFileStoreRequest, opts ...grpc.CallOption) (*CreateFileStoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateFileStoreResponse)
+	err := c.cc.Invoke(ctx, FileService_CreateFileStore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...grpc.CallOption) (*CreateFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateFolderResponse)
+	err := c.cc.Invoke(ctx, FileService_CreateFolder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) ListFolder(ctx context.Context, in *ListFolderRequest, opts ...grpc.CallOption) (*ListFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFolderResponse)
+	err := c.cc.Invoke(ctx, FileService_ListFolder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*GetFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFileResponse)
+	err := c.cc.Invoke(ctx, FileService_GetFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DownloadResponse)
+	err := c.cc.Invoke(ctx, FileService_Download_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) DownloadStream(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadStreamResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &FileService_ServiceDesc.Streams[0], FileService_DownloadStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[DownloadRequest, DownloadStreamResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileService_DownloadStreamClient = grpc.ServerStreamingClient[DownloadStreamResponse]
+
+func (c *fileServiceClient) MoveFolder(ctx context.Context, in *MoveFolderRequest, opts ...grpc.CallOption) (*MoveFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MoveFolderResponse)
+	err := c.cc.Invoke(ctx, FileService_MoveFolder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) MoveFile(ctx context.Context, in *MoveFileRequest, opts ...grpc.CallOption) (*MoveFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MoveFileResponse)
+	err := c.cc.Invoke(ctx, FileService_MoveFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteFileResponse)
+	err := c.cc.Invoke(ctx, FileService_DeleteFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) DeleteFolder(ctx context.Context, in *DeleteFolderRequest, opts ...grpc.CallOption) (*DeleteFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteFolderResponse)
+	err := c.cc.Invoke(ctx, FileService_DeleteFolder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, FileService_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewResponse)
+	err := c.cc.Invoke(ctx, FileService_Preview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileServiceServer is the server API for FileService service.
 // All implementations must embed UnimplementedFileServiceServer
 // for forward compatibility.
 type FileServiceServer interface {
 	Upload(context.Context, *UploadRequest) (*UploadResponse, error)
+	CreateFileStore(context.Context, *CreateFileStoreRequest) (*CreateFileStoreResponse, error)
+	CreateFolder(context.Context, *CreateFolderRequest) (*CreateFolderResponse, error)
+	ListFolder(context.Context, *ListFolderRequest) (*ListFolderResponse, error)
+	GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error)
+	Download(context.Context, *DownloadRequest) (*DownloadResponse, error)
+	DownloadStream(*DownloadRequest, grpc.ServerStreamingServer[DownloadStreamResponse]) error
+	MoveFolder(context.Context, *MoveFolderRequest) (*MoveFolderResponse, error)
+	MoveFile(context.Context, *MoveFileRequest) (*MoveFileResponse, error)
+	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
+	DeleteFolder(context.Context, *DeleteFolderRequest) (*DeleteFolderResponse, error)
+	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	Preview(context.Context, *PreviewRequest) (*PreviewResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -64,6 +229,42 @@ type UnimplementedFileServiceServer struct{}
 
 func (UnimplementedFileServiceServer) Upload(context.Context, *UploadRequest) (*UploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Upload not implemented")
+}
+func (UnimplementedFileServiceServer) CreateFileStore(context.Context, *CreateFileStoreRequest) (*CreateFileStoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFileStore not implemented")
+}
+func (UnimplementedFileServiceServer) CreateFolder(context.Context, *CreateFolderRequest) (*CreateFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFolder not implemented")
+}
+func (UnimplementedFileServiceServer) ListFolder(context.Context, *ListFolderRequest) (*ListFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFolder not implemented")
+}
+func (UnimplementedFileServiceServer) GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+}
+func (UnimplementedFileServiceServer) Download(context.Context, *DownloadRequest) (*DownloadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Download not implemented")
+}
+func (UnimplementedFileServiceServer) DownloadStream(*DownloadRequest, grpc.ServerStreamingServer[DownloadStreamResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadStream not implemented")
+}
+func (UnimplementedFileServiceServer) MoveFolder(context.Context, *MoveFolderRequest) (*MoveFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MoveFolder not implemented")
+}
+func (UnimplementedFileServiceServer) MoveFile(context.Context, *MoveFileRequest) (*MoveFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MoveFile not implemented")
+}
+func (UnimplementedFileServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
+}
+func (UnimplementedFileServiceServer) DeleteFolder(context.Context, *DeleteFolderRequest) (*DeleteFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFolder not implemented")
+}
+func (UnimplementedFileServiceServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedFileServiceServer) Preview(context.Context, *PreviewRequest) (*PreviewResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Preview not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -104,6 +305,215 @@ func _FileService_Upload_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_CreateFileStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFileStoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).CreateFileStore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_CreateFileStore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).CreateFileStore(ctx, req.(*CreateFileStoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_CreateFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).CreateFolder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_CreateFolder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).CreateFolder(ctx, req.(*CreateFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_ListFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).ListFolder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_ListFolder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).ListFolder(ctx, req.(*ListFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_GetFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).GetFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_GetFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).GetFile(ctx, req.(*GetFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_Download_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).Download(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_Download_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).Download(ctx, req.(*DownloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_DownloadStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(FileServiceServer).DownloadStream(m, &grpc.GenericServerStream[DownloadRequest, DownloadStreamResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileService_DownloadStreamServer = grpc.ServerStreamingServer[DownloadStreamResponse]
+
+func _FileService_MoveFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).MoveFolder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_MoveFolder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).MoveFolder(ctx, req.(*MoveFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_MoveFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).MoveFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_MoveFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).MoveFile(ctx, req.(*MoveFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).DeleteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_DeleteFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).DeleteFile(ctx, req.(*DeleteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_DeleteFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).DeleteFolder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_DeleteFolder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).DeleteFolder(ctx, req.(*DeleteFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_Search_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).Search(ctx, req.(*SearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_Preview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).Preview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_Preview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).Preview(ctx, req.(*PreviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,7 +525,57 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Upload",
 			Handler:    _FileService_Upload_Handler,
 		},
+		{
+			MethodName: "CreateFileStore",
+			Handler:    _FileService_CreateFileStore_Handler,
+		},
+		{
+			MethodName: "CreateFolder",
+			Handler:    _FileService_CreateFolder_Handler,
+		},
+		{
+			MethodName: "ListFolder",
+			Handler:    _FileService_ListFolder_Handler,
+		},
+		{
+			MethodName: "GetFile",
+			Handler:    _FileService_GetFile_Handler,
+		},
+		{
+			MethodName: "Download",
+			Handler:    _FileService_Download_Handler,
+		},
+		{
+			MethodName: "MoveFolder",
+			Handler:    _FileService_MoveFolder_Handler,
+		},
+		{
+			MethodName: "MoveFile",
+			Handler:    _FileService_MoveFile_Handler,
+		},
+		{
+			MethodName: "DeleteFile",
+			Handler:    _FileService_DeleteFile_Handler,
+		},
+		{
+			MethodName: "DeleteFolder",
+			Handler:    _FileService_DeleteFolder_Handler,
+		},
+		{
+			MethodName: "Search",
+			Handler:    _FileService_Search_Handler,
+		},
+		{
+			MethodName: "Preview",
+			Handler:    _FileService_Preview_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "DownloadStream",
+			Handler:       _FileService_DownloadStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "idl/cloudstorage/file.proto",
 }

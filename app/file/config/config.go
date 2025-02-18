@@ -23,7 +23,8 @@ type Config struct {
 }
 
 type Server struct {
-	Addr string `yaml:"addr"`
+	Addr    string `yaml:"addr"`
+	BaseURL string `yaml:"baseURL"`
 }
 
 type MySQL struct {

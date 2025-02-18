@@ -29,7 +29,8 @@ func InitServer() *rpc.Server {
 	userRepo := repository.NewUserRepo(userDao)
 	client := InitRegistry()
 	shortMsgServiceClient := rpc.InitSmClient(client)
-	userServer := service.NewUserServer(userRepo, shortMsgServiceClient)
+	fileServiceClient := rpc.InitFileClient(client)
+	userServer := service.NewUserServer(userRepo, shortMsgServiceClient, fileServiceClient)
 	server := rpc.NewServer(userServer, client)
 	return server
 }

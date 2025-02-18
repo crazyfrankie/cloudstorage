@@ -36,7 +36,7 @@ func (s *SmServer) SendSm(ctx context.Context, req *sm.SendSmRequest) (*sm.SendS
 	}
 
 	// Send
-	err = s.sms.Send(ctx, config.GetConf().SMS.TemplateID, []string{hash}, req.GetPhone())
+	err = s.sms.Send(ctx, config.GetConf().SMS.TemplateID, []string{code}, req.GetPhone())
 
 	return &sm.SendSmResponse{}, err
 }

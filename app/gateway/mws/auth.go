@@ -18,28 +18,8 @@ type Claim struct {
 	jwt.MapClaims
 }
 
-type AuthBuilder struct {
-	paths map[string]struct{}
-}
-
-func NewAuthBuilder() *AuthBuilder {
-	return &AuthBuilder{
-		paths: make(map[string]struct{}),
-	}
-}
-
-func (b *AuthBuilder) IgnorePath(path string) *AuthBuilder {
-	b.paths[path] = struct{}{}
-	return b
-}
-
-func (b *AuthBuilder) Auth() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if _, ok := b.paths[c.Request.URL.Path]; ok {
-			c.Next()
-			return
-		}
-
 		tokenHeader := c.GetHeader("Authorization")
 		token := extractToken(tokenHeader)
 

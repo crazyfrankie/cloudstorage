@@ -3,6 +3,7 @@
 package ioc
 
 import (
+	"github.com/gin-contrib/cors"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/crazyfrankie/cloudstorage/app/gateway/api"
-	"github.com/crazyfrankie/cloudstorage/app/gateway/mws"
 )
 
 func InitRegistry() *clientv3.Client {
@@ -27,10 +27,14 @@ func InitRegistry() *clientv3.Client {
 
 func InitMws() []gin.HandlerFunc {
 	return []gin.HandlerFunc{
-		mws.NewAuthBuilder().
-			IgnorePath("/api/user/send-code").
-			IgnorePath("/api/user/verify-code").
-			Auth(),
+		cors.New(cors.Config{
+			AllowOrigins:     []string{"http://localhost:8081"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+			ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
+			AllowCredentials: true,
+			MaxAge:           12 * time.Hour,
+		}),
 	}
 }
 

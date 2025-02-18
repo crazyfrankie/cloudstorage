@@ -60,6 +60,7 @@ func InitServer() *rpc.Server {
 		repository.NewUserRepo,
 		service.NewUserServer,
 		rpc.InitSmClient,
+		rpc.InitFileClient,
 		rpc.NewServer,
 	)
 	return new(rpc.Server)

@@ -20,6 +20,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PreviewType int32
+
+const (
+	PreviewType_UNKNOWN  PreviewType = 0
+	PreviewType_IMAGE    PreviewType = 1
+	PreviewType_PDF      PreviewType = 2
+	PreviewType_DOCUMENT PreviewType = 3
+	PreviewType_TEXT     PreviewType = 4
+)
+
+// Enum value maps for PreviewType.
+var (
+	PreviewType_name = map[int32]string{
+		0: "UNKNOWN",
+		1: "IMAGE",
+		2: "PDF",
+		3: "DOCUMENT",
+		4: "TEXT",
+	}
+	PreviewType_value = map[string]int32{
+		"UNKNOWN":  0,
+		"IMAGE":    1,
+		"PDF":      2,
+		"DOCUMENT": 3,
+		"TEXT":     4,
+	}
+)
+
+func (x PreviewType) Enum() *PreviewType {
+	p := new(PreviewType)
+	*p = x
+	return p
+}
+
+func (x PreviewType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PreviewType) Descriptor() protoreflect.EnumDescriptor {
+	return file_idl_cloudstorage_file_proto_enumTypes[0].Descriptor()
+}
+
+func (PreviewType) Type() protoreflect.EnumType {
+	return &file_idl_cloudstorage_file_proto_enumTypes[0]
+}
+
+func (x PreviewType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PreviewType.Descriptor instead.
+func (PreviewType) EnumDescriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{0}
+}
+
 type FileMetaData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -27,6 +82,8 @@ type FileMetaData struct {
 	Hash          string                 `protobuf:"bytes,3,opt,name=hash,proto3" json:"hash,omitempty"`
 	Path          string                 `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
 	ContentType   string                 `protobuf:"bytes,5,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	UserId        int32                  `protobuf:"varint,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FolderId      int64                  `protobuf:"varint,7,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -96,6 +153,196 @@ func (x *FileMetaData) GetContentType() string {
 	return ""
 }
 
+func (x *FileMetaData) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *FileMetaData) GetFolderId() int64 {
+	if x != nil {
+		return x.FolderId
+	}
+	return 0
+}
+
+type File struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	FolderId      int64                  `protobuf:"varint,3,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Size          int64                  `protobuf:"varint,6,opt,name=size,proto3" json:"size,omitempty"`
+	Type          string                 `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
+	Utime         string                 `protobuf:"bytes,8,opt,name=utime,proto3" json:"utime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *File) Reset() {
+	*x = File{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *File) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*File) ProtoMessage() {}
+
+func (x *File) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use File.ProtoReflect.Descriptor instead.
+func (*File) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *File) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *File) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *File) GetFolderId() int64 {
+	if x != nil {
+		return x.FolderId
+	}
+	return 0
+}
+
+func (x *File) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *File) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *File) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *File) GetUtime() string {
+	if x != nil {
+		return x.Utime
+	}
+	return ""
+}
+
+type Folder struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ParentId      int64                  `protobuf:"varint,3,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Path          string                 `protobuf:"bytes,5,opt,name=path,proto3" json:"path,omitempty"`
+	Utime         string                 `protobuf:"bytes,6,opt,name=utime,proto3" json:"utime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Folder) Reset() {
+	*x = Folder{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Folder) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Folder) ProtoMessage() {}
+
+func (x *Folder) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Folder.ProtoReflect.Descriptor instead.
+func (*Folder) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Folder) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Folder) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Folder) GetParentId() int64 {
+	if x != nil {
+		return x.ParentId
+	}
+	return 0
+}
+
+func (x *Folder) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *Folder) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *Folder) GetUtime() string {
+	if x != nil {
+		return x.Utime
+	}
+	return ""
+}
+
 type UploadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Metadata      *FileMetaData          `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
@@ -106,7 +353,7 @@ type UploadRequest struct {
 
 func (x *UploadRequest) Reset() {
 	*x = UploadRequest{}
-	mi := &file_idl_cloudstorage_file_proto_msgTypes[1]
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -118,7 +365,7 @@ func (x *UploadRequest) String() string {
 func (*UploadRequest) ProtoMessage() {}
 
 func (x *UploadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_idl_cloudstorage_file_proto_msgTypes[1]
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -131,7 +378,7 @@ func (x *UploadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadRequest.ProtoReflect.Descriptor instead.
 func (*UploadRequest) Descriptor() ([]byte, []int) {
-	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{1}
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UploadRequest) GetMetadata() *FileMetaData {
@@ -151,14 +398,13 @@ func (x *UploadRequest) GetData() []byte {
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UploadResponse) Reset() {
 	*x = UploadResponse{}
-	mi := &file_idl_cloudstorage_file_proto_msgTypes[2]
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -170,7 +416,7 @@ func (x *UploadResponse) String() string {
 func (*UploadResponse) ProtoMessage() {}
 
 func (x *UploadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_idl_cloudstorage_file_proto_msgTypes[2]
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +429,7 @@ func (x *UploadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadResponse.ProtoReflect.Descriptor instead.
 func (*UploadResponse) Descriptor() ([]byte, []int) {
-	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{2}
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UploadResponse) GetId() int32 {
@@ -193,11 +439,1144 @@ func (x *UploadResponse) GetId() int32 {
 	return 0
 }
 
-func (x *UploadResponse) GetUrl() string {
+type CreateFileStoreRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFileStoreRequest) Reset() {
+	*x = CreateFileStoreRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFileStoreRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFileStoreRequest) ProtoMessage() {}
+
+func (x *CreateFileStoreRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[5]
 	if x != nil {
-		return x.Url
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFileStoreRequest.ProtoReflect.Descriptor instead.
+func (*CreateFileStoreRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CreateFileStoreRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type CreateFileStoreResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFileStoreResponse) Reset() {
+	*x = CreateFileStoreResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFileStoreResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFileStoreResponse) ProtoMessage() {}
+
+func (x *CreateFileStoreResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFileStoreResponse.ProtoReflect.Descriptor instead.
+func (*CreateFileStoreResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateFileStoreResponse) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type CreateFolderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ParentId      int64                  `protobuf:"varint,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFolderRequest) Reset() {
+	*x = CreateFolderRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFolderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFolderRequest) ProtoMessage() {}
+
+func (x *CreateFolderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFolderRequest.ProtoReflect.Descriptor instead.
+func (*CreateFolderRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreateFolderRequest) GetName() string {
+	if x != nil {
+		return x.Name
 	}
 	return ""
+}
+
+func (x *CreateFolderRequest) GetParentId() int64 {
+	if x != nil {
+		return x.ParentId
+	}
+	return 0
+}
+
+func (x *CreateFolderRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type CreateFolderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Folder        *Folder                `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFolderResponse) Reset() {
+	*x = CreateFolderResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFolderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFolderResponse) ProtoMessage() {}
+
+func (x *CreateFolderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFolderResponse.ProtoReflect.Descriptor instead.
+func (*CreateFolderResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CreateFolderResponse) GetFolder() *Folder {
+	if x != nil {
+		return x.Folder
+	}
+	return nil
+}
+
+type ListFolderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FolderId      int64                  `protobuf:"varint,1,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFolderRequest) Reset() {
+	*x = ListFolderRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFolderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFolderRequest) ProtoMessage() {}
+
+func (x *ListFolderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFolderRequest.ProtoReflect.Descriptor instead.
+func (*ListFolderRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListFolderRequest) GetFolderId() int64 {
+	if x != nil {
+		return x.FolderId
+	}
+	return 0
+}
+
+func (x *ListFolderRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type ListFolderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Folders       []*Folder              `protobuf:"bytes,1,rep,name=folders,proto3" json:"folders,omitempty"`
+	Files         []*File                `protobuf:"bytes,2,rep,name=files,proto3" json:"files,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFolderResponse) Reset() {
+	*x = ListFolderResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFolderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFolderResponse) ProtoMessage() {}
+
+func (x *ListFolderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFolderResponse.ProtoReflect.Descriptor instead.
+func (*ListFolderResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListFolderResponse) GetFolders() []*Folder {
+	if x != nil {
+		return x.Folders
+	}
+	return nil
+}
+
+func (x *ListFolderResponse) GetFiles() []*File {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+type GetFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileId        int32                  `protobuf:"varint,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFileRequest) Reset() {
+	*x = GetFileRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileRequest) ProtoMessage() {}
+
+func (x *GetFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFileRequest.ProtoReflect.Descriptor instead.
+func (*GetFileRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetFileRequest) GetFileId() int32 {
+	if x != nil {
+		return x.FileId
+	}
+	return 0
+}
+
+func (x *GetFileRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFileResponse) Reset() {
+	*x = GetFileResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileResponse) ProtoMessage() {}
+
+func (x *GetFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFileResponse.ProtoReflect.Descriptor instead.
+func (*GetFileResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetFileResponse) GetFile() *File {
+	if x != nil {
+		return x.File
+	}
+	return nil
+}
+
+type DownloadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileId        int32                  `protobuf:"varint,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DownloadRequest) Reset() {
+	*x = DownloadRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DownloadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DownloadRequest) ProtoMessage() {}
+
+func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DownloadRequest.ProtoReflect.Descriptor instead.
+func (*DownloadRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *DownloadRequest) GetFileId() int32 {
+	if x != nil {
+		return x.FileId
+	}
+	return 0
+}
+
+func (x *DownloadRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type DownloadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DownloadResponse) Reset() {
+	*x = DownloadResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DownloadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DownloadResponse) ProtoMessage() {}
+
+func (x *DownloadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DownloadResponse.ProtoReflect.Descriptor instead.
+func (*DownloadResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *DownloadResponse) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type DownloadStreamResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DownloadStreamResponse) Reset() {
+	*x = DownloadStreamResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DownloadStreamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DownloadStreamResponse) ProtoMessage() {}
+
+func (x *DownloadStreamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DownloadStreamResponse.ProtoReflect.Descriptor instead.
+func (*DownloadStreamResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DownloadStreamResponse) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type MoveFolderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FolderId      int64                  `protobuf:"varint,2,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
+	ToFolderId    int64                  `protobuf:"varint,3,opt,name=to_folder_id,json=toFolderId,proto3" json:"to_folder_id,omitempty"`
+	FolderName    string                 `protobuf:"bytes,4,opt,name=folder_name,json=folderName,proto3" json:"folder_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveFolderRequest) Reset() {
+	*x = MoveFolderRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveFolderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveFolderRequest) ProtoMessage() {}
+
+func (x *MoveFolderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveFolderRequest.ProtoReflect.Descriptor instead.
+func (*MoveFolderRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MoveFolderRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *MoveFolderRequest) GetFolderId() int64 {
+	if x != nil {
+		return x.FolderId
+	}
+	return 0
+}
+
+func (x *MoveFolderRequest) GetToFolderId() int64 {
+	if x != nil {
+		return x.ToFolderId
+	}
+	return 0
+}
+
+func (x *MoveFolderRequest) GetFolderName() string {
+	if x != nil {
+		return x.FolderName
+	}
+	return ""
+}
+
+type MoveFolderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveFolderResponse) Reset() {
+	*x = MoveFolderResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveFolderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveFolderResponse) ProtoMessage() {}
+
+func (x *MoveFolderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveFolderResponse.ProtoReflect.Descriptor instead.
+func (*MoveFolderResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{17}
+}
+
+type MoveFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FileId        int64                  `protobuf:"varint,2,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	ToFolderId    int64                  `protobuf:"varint,4,opt,name=to_folder_id,json=toFolderId,proto3" json:"to_folder_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveFileRequest) Reset() {
+	*x = MoveFileRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveFileRequest) ProtoMessage() {}
+
+func (x *MoveFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveFileRequest.ProtoReflect.Descriptor instead.
+func (*MoveFileRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MoveFileRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *MoveFileRequest) GetFileId() int64 {
+	if x != nil {
+		return x.FileId
+	}
+	return 0
+}
+
+func (x *MoveFileRequest) GetToFolderId() int64 {
+	if x != nil {
+		return x.ToFolderId
+	}
+	return 0
+}
+
+type MoveFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveFileResponse) Reset() {
+	*x = MoveFileResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveFileResponse) ProtoMessage() {}
+
+func (x *MoveFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveFileResponse.ProtoReflect.Descriptor instead.
+func (*MoveFileResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{19}
+}
+
+type DeleteFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileId        int64                  `protobuf:"varint,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileRequest) Reset() {
+	*x = DeleteFileRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileRequest) ProtoMessage() {}
+
+func (x *DeleteFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileRequest.ProtoReflect.Descriptor instead.
+func (*DeleteFileRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeleteFileRequest) GetFileId() int64 {
+	if x != nil {
+		return x.FileId
+	}
+	return 0
+}
+
+func (x *DeleteFileRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type DeleteFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileResponse) Reset() {
+	*x = DeleteFileResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileResponse) ProtoMessage() {}
+
+func (x *DeleteFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileResponse.ProtoReflect.Descriptor instead.
+func (*DeleteFileResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{21}
+}
+
+type DeleteFolderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FolderId      int64                  `protobuf:"varint,1,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFolderRequest) Reset() {
+	*x = DeleteFolderRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFolderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFolderRequest) ProtoMessage() {}
+
+func (x *DeleteFolderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFolderRequest.ProtoReflect.Descriptor instead.
+func (*DeleteFolderRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *DeleteFolderRequest) GetFolderId() int64 {
+	if x != nil {
+		return x.FolderId
+	}
+	return 0
+}
+
+func (x *DeleteFolderRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type DeleteFolderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFolderResponse) Reset() {
+	*x = DeleteFolderResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFolderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFolderResponse) ProtoMessage() {}
+
+func (x *DeleteFolderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFolderResponse.ProtoReflect.Descriptor instead.
+func (*DeleteFolderResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{23}
+}
+
+type SearchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	Size          int32                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchRequest) Reset() {
+	*x = SearchRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchRequest) ProtoMessage() {}
+
+func (x *SearchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
+func (*SearchRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SearchRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *SearchRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *SearchRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *SearchRequest) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type SearchResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         []*File                `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
+	Folders       []*Folder              `protobuf:"bytes,2,rep,name=folders,proto3" json:"folders,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchResponse) Reset() {
+	*x = SearchResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchResponse) ProtoMessage() {}
+
+func (x *SearchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
+func (*SearchResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *SearchResponse) GetFiles() []*File {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+func (x *SearchResponse) GetFolders() []*Folder {
+	if x != nil {
+		return x.Folders
+	}
+	return nil
+}
+
+type PreviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileId        int32                  `protobuf:"varint,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewRequest) Reset() {
+	*x = PreviewRequest{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewRequest) ProtoMessage() {}
+
+func (x *PreviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewRequest.ProtoReflect.Descriptor instead.
+func (*PreviewRequest) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *PreviewRequest) GetFileId() int32 {
+	if x != nil {
+		return x.FileId
+	}
+	return 0
+}
+
+func (x *PreviewRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type PreviewResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PreviewUrl    string                 `protobuf:"bytes,1,opt,name=preview_url,json=previewUrl,proto3" json:"preview_url,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	Type          PreviewType            `protobuf:"varint,3,opt,name=type,proto3,enum=file.PreviewType" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewResponse) Reset() {
+	*x = PreviewResponse{}
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewResponse) ProtoMessage() {}
+
+func (x *PreviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idl_cloudstorage_file_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewResponse.ProtoReflect.Descriptor instead.
+func (*PreviewResponse) Descriptor() ([]byte, []int) {
+	return file_idl_cloudstorage_file_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *PreviewResponse) GetPreviewUrl() string {
+	if x != nil {
+		return x.PreviewUrl
+	}
+	return ""
+}
+
+func (x *PreviewResponse) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *PreviewResponse) GetType() PreviewType {
+	if x != nil {
+		return x.Type
+	}
+	return PreviewType_UNKNOWN
 }
 
 var File_idl_cloudstorage_file_proto protoreflect.FileDescriptor
@@ -205,7 +1584,7 @@ var File_idl_cloudstorage_file_proto protoreflect.FileDescriptor
 var file_idl_cloudstorage_file_proto_rawDesc = []byte{
 	0x0a, 0x1b, 0x69, 0x64, 0x6c, 0x2f, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x74, 0x6f, 0x72, 0x61,
 	0x67, 0x65, 0x2f, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04, 0x66,
-	0x69, 0x6c, 0x65, 0x22, 0x81, 0x01, 0x0a, 0x0c, 0x46, 0x69, 0x6c, 0x65, 0x4d, 0x65, 0x74, 0x61,
+	0x69, 0x6c, 0x65, 0x22, 0xb7, 0x01, 0x0a, 0x0c, 0x46, 0x69, 0x6c, 0x65, 0x4d, 0x65, 0x74, 0x61,
 	0x44, 0x61, 0x74, 0x61, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x12, 0x12, 0x0a, 0x04,
@@ -213,21 +1592,193 @@ var file_idl_cloudstorage_file_proto_rawDesc = []byte{
 	0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
 	0x70, 0x61, 0x74, 0x68, 0x12, 0x21, 0x0a, 0x0c, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f,
 	0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x63, 0x6f, 0x6e, 0x74,
-	0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x22, 0x53, 0x0a, 0x0d, 0x55, 0x70, 0x6c, 0x6f, 0x61,
-	0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2e, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61,
-	0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x66, 0x69, 0x6c,
-	0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x44, 0x61, 0x74, 0x61, 0x52, 0x08,
-	0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x32, 0x0a, 0x0e,
-	0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e,
-	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12, 0x10,
-	0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75, 0x72, 0x6c,
-	0x32, 0x42, 0x0a, 0x0b, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
-	0x33, 0x0a, 0x06, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x13, 0x2e, 0x66, 0x69, 0x6c, 0x65,
-	0x2e, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14,
-	0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x07, 0x5a, 0x05, 0x2f, 0x66, 0x69, 0x6c, 0x65, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f,
+	0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
+	0x12, 0x1b, 0x0a, 0x09, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x07, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x08, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x22, 0x9e, 0x01,
+	0x0a, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x66, 0x6f,
+	0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x66,
+	0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f,
+	0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
+	0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04,
+	0x73, 0x69, 0x7a, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x07, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x75, 0x74, 0x69, 0x6d,
+	0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x75, 0x74, 0x69, 0x6d, 0x65, 0x22, 0x8c,
+	0x01, 0x0a, 0x06, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a,
+	0x09, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x08, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73,
+	0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65,
+	0x72, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x12, 0x14, 0x0a, 0x05, 0x75, 0x74, 0x69, 0x6d, 0x65,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x75, 0x74, 0x69, 0x6d, 0x65, 0x22, 0x53, 0x0a,
+	0x0d, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2e,
+	0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x12, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4d, 0x65, 0x74, 0x61,
+	0x44, 0x61, 0x74, 0x61, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x12,
+	0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61,
+	0x74, 0x61, 0x22, 0x20, 0x0a, 0x0e, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x02, 0x69, 0x64, 0x22, 0x31, 0x0a, 0x16, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x69,
+	0x6c, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17,
+	0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x29, 0x0a, 0x17, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02,
+	0x69, 0x64, 0x22, 0x5f, 0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64,
+	0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a,
+	0x09, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x08, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73,
+	0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65,
+	0x72, 0x49, 0x64, 0x22, 0x3c, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x24, 0x0a, 0x06, 0x66,
+	0x6f, 0x6c, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x66, 0x69,
+	0x6c, 0x65, 0x2e, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65,
+	0x72, 0x22, 0x49, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x66, 0x6f, 0x6c, 0x64, 0x65,
+	0x72, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x5e, 0x0a, 0x12,
+	0x4c, 0x69, 0x73, 0x74, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x26, 0x0a, 0x07, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x46, 0x6f, 0x6c, 0x64, 0x65,
+	0x72, 0x52, 0x07, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x73, 0x12, 0x20, 0x0a, 0x05, 0x66, 0x69,
+	0x6c, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x66, 0x69, 0x6c, 0x65,
+	0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x05, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x22, 0x42, 0x0a, 0x0e,
+	0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17,
+	0x0a, 0x07, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x66, 0x69, 0x6c, 0x65, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f,
+	0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
+	0x22, 0x31, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x1e, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x0a, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x04, 0x66,
+	0x69, 0x6c, 0x65, 0x22, 0x43, 0x0a, 0x0f, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x65, 0x49, 0x64, 0x12,
+	0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x26, 0x0a, 0x10, 0x44, 0x6f, 0x77, 0x6e,
+	0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04,
+	0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61,
+	0x22, 0x2c, 0x0a, 0x16, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x72, 0x65,
+	0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x61,
+	0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x8c,
+	0x01, 0x0a, 0x11, 0x4d, 0x6f, 0x76, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1b, 0x0a,
+	0x09, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x08, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0c, 0x74, 0x6f,
+	0x5f, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x0a, 0x74, 0x6f, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b,
+	0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x14, 0x0a,
+	0x12, 0x4d, 0x6f, 0x76, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x65, 0x0a, 0x0f, 0x4d, 0x6f, 0x76, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12,
+	0x17, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x06, 0x66, 0x69, 0x6c, 0x65, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0c, 0x74, 0x6f, 0x5f, 0x66,
+	0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a,
+	0x74, 0x6f, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x22, 0x12, 0x0a, 0x10, 0x4d, 0x6f,
+	0x76, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x45,
+	0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x65, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07,
+	0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x75,
+	0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46,
+	0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x4b, 0x0a, 0x13, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12,
+	0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x16, 0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x66, 0x0a, 0x0d, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x71, 0x75,
+	0x65, 0x72, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x71, 0x75, 0x65, 0x72, 0x79,
+	0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04,
+	0x70, 0x61, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x22, 0x5a, 0x0a, 0x0e, 0x53, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x05, 0x66, 0x69,
+	0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x66, 0x69, 0x6c, 0x65,
+	0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x05, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x12, 0x26, 0x0a, 0x07,
+	0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e,
+	0x66, 0x69, 0x6c, 0x65, 0x2e, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x07, 0x66, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x73, 0x22, 0x42, 0x0a, 0x0e, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x65, 0x49, 0x64, 0x12,
+	0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x7c, 0x0a, 0x0f, 0x50, 0x72, 0x65, 0x76,
+	0x69, 0x65, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x70,
+	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0a, 0x70, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x55, 0x72, 0x6c, 0x12, 0x21, 0x0a, 0x0c,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12,
+	0x25, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x11, 0x2e,
+	0x66, 0x69, 0x6c, 0x65, 0x2e, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x54, 0x79, 0x70, 0x65,
+	0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x2a, 0x46, 0x0a, 0x0b, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65,
+	0x77, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e,
+	0x10, 0x00, 0x12, 0x09, 0x0a, 0x05, 0x49, 0x4d, 0x41, 0x47, 0x45, 0x10, 0x01, 0x12, 0x07, 0x0a,
+	0x03, 0x50, 0x44, 0x46, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08, 0x44, 0x4f, 0x43, 0x55, 0x4d, 0x45,
+	0x4e, 0x54, 0x10, 0x03, 0x12, 0x08, 0x0a, 0x04, 0x54, 0x45, 0x58, 0x54, 0x10, 0x04, 0x32, 0xc7,
+	0x06, 0x0a, 0x0b, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x33,
+	0x0a, 0x06, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x13, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e,
+	0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e,
+	0x66, 0x69, 0x6c, 0x65, 0x2e, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c,
+	0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x12, 0x1c, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a, 0x0c, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x12, 0x19, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a,
+	0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64,
+	0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a, 0x0a, 0x4c, 0x69,
+	0x73, 0x74, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x12, 0x17, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e,
+	0x4c, 0x69, 0x73, 0x74, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x18, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x07, 0x47,
+	0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x14, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x47, 0x65,
+	0x74, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x66,
+	0x69, 0x6c, 0x65, 0x2e, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x39, 0x0a, 0x08, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x12,
+	0x15, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x6f,
+	0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47,
+	0x0a, 0x0e, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
+	0x12, 0x15, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44,
+	0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x12, 0x3f, 0x0a, 0x0a, 0x4d, 0x6f, 0x76, 0x65, 0x46,
+	0x6f, 0x6c, 0x64, 0x65, 0x72, 0x12, 0x17, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x4d, 0x6f, 0x76,
+	0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18,
+	0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x4d, 0x6f, 0x76, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x39, 0x0a, 0x08, 0x4d, 0x6f, 0x76, 0x65,
+	0x46, 0x69, 0x6c, 0x65, 0x12, 0x15, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x4d, 0x6f, 0x76, 0x65,
+	0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x66, 0x69,
+	0x6c, 0x65, 0x2e, 0x4d, 0x6f, 0x76, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x69, 0x6c,
+	0x65, 0x12, 0x17, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46,
+	0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x66, 0x69, 0x6c,
+	0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a, 0x0c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6f,
+	0x6c, 0x64, 0x65, 0x72, 0x12, 0x19, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x1a, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x06, 0x53,
+	0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x13, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x53, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x66, 0x69, 0x6c,
+	0x65, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x36, 0x0a, 0x07, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x12, 0x14, 0x2e, 0x66, 0x69,
+	0x6c, 0x65, 0x2e, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x15, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x50, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x07, 0x5a, 0x05, 0x2f, 0x66, 0x69, 0x6c,
+	0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -242,21 +1793,79 @@ func file_idl_cloudstorage_file_proto_rawDescGZIP() []byte {
 	return file_idl_cloudstorage_file_proto_rawDescData
 }
 
-var file_idl_cloudstorage_file_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_idl_cloudstorage_file_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_idl_cloudstorage_file_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_idl_cloudstorage_file_proto_goTypes = []any{
-	(*FileMetaData)(nil),   // 0: file.FileMetaData
-	(*UploadRequest)(nil),  // 1: file.UploadRequest
-	(*UploadResponse)(nil), // 2: file.UploadResponse
+	(PreviewType)(0),                // 0: file.PreviewType
+	(*FileMetaData)(nil),            // 1: file.FileMetaData
+	(*File)(nil),                    // 2: file.File
+	(*Folder)(nil),                  // 3: file.Folder
+	(*UploadRequest)(nil),           // 4: file.UploadRequest
+	(*UploadResponse)(nil),          // 5: file.UploadResponse
+	(*CreateFileStoreRequest)(nil),  // 6: file.CreateFileStoreRequest
+	(*CreateFileStoreResponse)(nil), // 7: file.CreateFileStoreResponse
+	(*CreateFolderRequest)(nil),     // 8: file.CreateFolderRequest
+	(*CreateFolderResponse)(nil),    // 9: file.CreateFolderResponse
+	(*ListFolderRequest)(nil),       // 10: file.ListFolderRequest
+	(*ListFolderResponse)(nil),      // 11: file.ListFolderResponse
+	(*GetFileRequest)(nil),          // 12: file.GetFileRequest
+	(*GetFileResponse)(nil),         // 13: file.GetFileResponse
+	(*DownloadRequest)(nil),         // 14: file.DownloadRequest
+	(*DownloadResponse)(nil),        // 15: file.DownloadResponse
+	(*DownloadStreamResponse)(nil),  // 16: file.DownloadStreamResponse
+	(*MoveFolderRequest)(nil),       // 17: file.MoveFolderRequest
+	(*MoveFolderResponse)(nil),      // 18: file.MoveFolderResponse
+	(*MoveFileRequest)(nil),         // 19: file.MoveFileRequest
+	(*MoveFileResponse)(nil),        // 20: file.MoveFileResponse
+	(*DeleteFileRequest)(nil),       // 21: file.DeleteFileRequest
+	(*DeleteFileResponse)(nil),      // 22: file.DeleteFileResponse
+	(*DeleteFolderRequest)(nil),     // 23: file.DeleteFolderRequest
+	(*DeleteFolderResponse)(nil),    // 24: file.DeleteFolderResponse
+	(*SearchRequest)(nil),           // 25: file.SearchRequest
+	(*SearchResponse)(nil),          // 26: file.SearchResponse
+	(*PreviewRequest)(nil),          // 27: file.PreviewRequest
+	(*PreviewResponse)(nil),         // 28: file.PreviewResponse
 }
 var file_idl_cloudstorage_file_proto_depIdxs = []int32{
-	0, // 0: file.UploadRequest.metadata:type_name -> file.FileMetaData
-	1, // 1: file.FileService.Upload:input_type -> file.UploadRequest
-	2, // 2: file.FileService.Upload:output_type -> file.UploadResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1,  // 0: file.UploadRequest.metadata:type_name -> file.FileMetaData
+	3,  // 1: file.CreateFolderResponse.folder:type_name -> file.Folder
+	3,  // 2: file.ListFolderResponse.folders:type_name -> file.Folder
+	2,  // 3: file.ListFolderResponse.files:type_name -> file.File
+	2,  // 4: file.GetFileResponse.file:type_name -> file.File
+	2,  // 5: file.SearchResponse.files:type_name -> file.File
+	3,  // 6: file.SearchResponse.folders:type_name -> file.Folder
+	0,  // 7: file.PreviewResponse.type:type_name -> file.PreviewType
+	4,  // 8: file.FileService.Upload:input_type -> file.UploadRequest
+	6,  // 9: file.FileService.CreateFileStore:input_type -> file.CreateFileStoreRequest
+	8,  // 10: file.FileService.CreateFolder:input_type -> file.CreateFolderRequest
+	10, // 11: file.FileService.ListFolder:input_type -> file.ListFolderRequest
+	12, // 12: file.FileService.GetFile:input_type -> file.GetFileRequest
+	14, // 13: file.FileService.Download:input_type -> file.DownloadRequest
+	14, // 14: file.FileService.DownloadStream:input_type -> file.DownloadRequest
+	17, // 15: file.FileService.MoveFolder:input_type -> file.MoveFolderRequest
+	19, // 16: file.FileService.MoveFile:input_type -> file.MoveFileRequest
+	21, // 17: file.FileService.DeleteFile:input_type -> file.DeleteFileRequest
+	23, // 18: file.FileService.DeleteFolder:input_type -> file.DeleteFolderRequest
+	25, // 19: file.FileService.Search:input_type -> file.SearchRequest
+	27, // 20: file.FileService.Preview:input_type -> file.PreviewRequest
+	5,  // 21: file.FileService.Upload:output_type -> file.UploadResponse
+	7,  // 22: file.FileService.CreateFileStore:output_type -> file.CreateFileStoreResponse
+	9,  // 23: file.FileService.CreateFolder:output_type -> file.CreateFolderResponse
+	11, // 24: file.FileService.ListFolder:output_type -> file.ListFolderResponse
+	13, // 25: file.FileService.GetFile:output_type -> file.GetFileResponse
+	15, // 26: file.FileService.Download:output_type -> file.DownloadResponse
+	16, // 27: file.FileService.DownloadStream:output_type -> file.DownloadStreamResponse
+	18, // 28: file.FileService.MoveFolder:output_type -> file.MoveFolderResponse
+	20, // 29: file.FileService.MoveFile:output_type -> file.MoveFileResponse
+	22, // 30: file.FileService.DeleteFile:output_type -> file.DeleteFileResponse
+	24, // 31: file.FileService.DeleteFolder:output_type -> file.DeleteFolderResponse
+	26, // 32: file.FileService.Search:output_type -> file.SearchResponse
+	28, // 33: file.FileService.Preview:output_type -> file.PreviewResponse
+	21, // [21:34] is the sub-list for method output_type
+	8,  // [8:21] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_idl_cloudstorage_file_proto_init() }
@@ -269,13 +1878,14 @@ func file_idl_cloudstorage_file_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_idl_cloudstorage_file_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   3,
+			NumEnums:      1,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_idl_cloudstorage_file_proto_goTypes,
 		DependencyIndexes: file_idl_cloudstorage_file_proto_depIdxs,
+		EnumInfos:         file_idl_cloudstorage_file_proto_enumTypes,
 		MessageInfos:      file_idl_cloudstorage_file_proto_msgTypes,
 	}.Build()
 	File_idl_cloudstorage_file_proto = out.File

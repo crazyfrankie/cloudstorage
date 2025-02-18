@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"net/url"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 
@@ -12,12 +14,12 @@ import (
 
 type MinioServer struct {
 	client     *minio.Client
-	bucketName string
+	BucketName string
 }
 
 func NewMinioServer(client *minio.Client) *MinioServer {
 	name := config.GetConf().Minio.BucketName[0]
-	server := &MinioServer{client: client, bucketName: name}
+	server := &MinioServer{client: client, BucketName: name}
 
 	server.MakeBucket(context.Background(), name)
 
@@ -39,7 +41,18 @@ func (m *MinioServer) MakeBucket(ctx context.Context, name string) {
 	}
 }
 
-func (m *MinioServer) PutToBucket(ctx context.Context, filename string, filesize int64, data []byte) (minio.UploadInfo, error) {
-	info, err := m.client.PutObject(ctx, m.bucketName, filename, bytes.NewReader(data), filesize, minio.PutObjectOptions{})
+func (m *MinioServer) PutToBucket(ctx context.Context, bucketName, filename string, filesize int64, data []byte) (minio.UploadInfo, error) {
+	info, err := m.client.PutObject(ctx, bucketName, filename, bytes.NewReader(data), filesize, minio.PutObjectOptions{})
 	return info, err
+}
+
+func (m *MinioServer) GetObject(ctx context.Context, bucketName, filename string) (*minio.Object, error) {
+	info, err := m.client.GetObject(ctx, bucketName, filename, minio.GetObjectOptions{})
+	return info, err
+}
+
+func (m *MinioServer) PresignedGetObject(ctx context.Context, bucketName, filename string, expiration time.Duration) (*url.URL, error) {
+	reqParams := make(url.Values)
+
+	return m.client.PresignedGetObject(ctx, bucketName, filename, expiration, reqParams)
 }

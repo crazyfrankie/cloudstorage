@@ -29,7 +29,16 @@ message VerifyCodeResponse {
   string token = 1;
 }
 
+message GetUserInfoRequest {
+  int32 user_id = 1;
+}
+
+message GetUserInfoResponse {
+  User user = 1;
+}
+
 service UserService {
   rpc SendCode(SendCodeRequest) returns (SendCodeResponse);
   rpc VerifyCode(VerifyCodeRequest) returns (VerifyCodeResponse);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
 }

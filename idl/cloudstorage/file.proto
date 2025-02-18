@@ -10,6 +10,27 @@ message FileMetaData {
   string hash = 3;
   string path = 4;
   string content_type = 5;
+  int32 user_id = 6;
+  int64 folder_id = 7;
+}
+
+message File {
+  int32 id = 1;
+  string name = 2;
+  int64 folder_id = 3;
+  int32 user_id = 4;
+  int64 size = 6;
+  string type = 7;
+  string utime = 8;
+}
+
+message Folder {
+  int64 id = 1;
+  string name = 2;
+  int64 parent_id = 3;
+  int32 user_id = 4;
+  string path = 5;
+  string utime = 6;
 }
 
 message UploadRequest {
@@ -19,9 +40,140 @@ message UploadRequest {
 
 message UploadResponse {
   int32 id = 1;
-  string url = 2;
+}
+
+message CreateFileStoreRequest {
+  int32 user_id = 1;
+}
+
+message CreateFileStoreResponse {
+  int32 id = 1;
+}
+
+message CreateFolderRequest {
+  string name = 1;
+  int64 parent_id = 2;
+  int32 user_id = 3;
+}
+
+message CreateFolderResponse {
+  Folder folder = 1;
+}
+
+message ListFolderRequest {
+  int64 folder_id = 1;
+  int32 user_id = 2;
+}
+
+message ListFolderResponse {
+  repeated Folder folders = 1;
+  repeated File files = 2;
+}
+
+message GetFileRequest {
+  int32 file_id = 1;
+  int32 user_id = 2;
+}
+
+message GetFileResponse {
+  File file = 1;
+}
+
+message DownloadRequest {
+  int32 file_id = 1;
+  int32 user_id = 2;
+}
+
+message DownloadResponse {
+  bytes data = 1;
+}
+
+message DownloadStreamResponse {
+  bytes data = 1;
+}
+
+message MoveFolderRequest {
+  int32 user_id = 1;
+  int64 folder_id = 2;
+  int64 to_folder_id = 3;
+  string folder_name = 4;
+}
+
+message MoveFolderResponse {
+
+}
+
+message MoveFileRequest {
+  int32 user_id = 1;
+  int64 file_id = 2;
+  int64 to_folder_id = 4;
+}
+
+message MoveFileResponse {
+
+}
+
+message DeleteFileRequest {
+  int64 file_id = 1;
+  int32 user_id = 2;
+}
+
+message DeleteFileResponse {
+
+}
+
+message DeleteFolderRequest {
+  int64 folder_id = 1;
+  int32 user_id = 2;
+}
+
+message DeleteFolderResponse {
+
+}
+
+message SearchRequest {
+  int32 user_id = 1;
+  string query = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message SearchResponse {
+  repeated File files = 1;
+  repeated Folder folders = 2;
+}
+
+message PreviewRequest {
+  int32 file_id = 1;
+  int32 user_id = 2;
+}
+
+message PreviewResponse {
+  string preview_url = 1;
+  string content_type = 2;
+  PreviewType type = 3;
+}
+
+enum PreviewType {
+  UNKNOWN = 0;
+  IMAGE = 1;
+  PDF = 2;
+  DOCUMENT = 3;
+  TEXT = 4;
 }
 
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
+  rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
+  rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse);
+  rpc ListFolder(ListFolderRequest) returns (ListFolderResponse);
+  rpc GetFile(GetFileRequest) returns (GetFileResponse);
+  rpc Download(DownloadRequest) returns (DownloadResponse);
+  rpc DownloadStream(DownloadRequest) returns (stream DownloadStreamResponse);
+  rpc MoveFolder(MoveFolderRequest) returns (MoveFolderResponse);
+  rpc MoveFile(MoveFileRequest) returns (MoveFileResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+  rpc DeleteFolder(DeleteFolderRequest) returns (DeleteFolderResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Preview(PreviewRequest) returns (PreviewResponse);
 }

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,12 +25,15 @@ func NewUserDao(db *gorm.DB) *UserDao {
 }
 
 func (u *UserDao) Create(ctx context.Context, user *User) error {
+	now := time.Now().Unix()
+	user.Ctime = now
+	user.Utime = now
 	return u.db.WithContext(ctx).Create(user).Error
 }
 
 func (u *UserDao) FindByPhone(ctx context.Context, phone string) (User, error) {
 	var user User
-	err := u.db.WithContext(ctx).Where("phone = ?", phone).First(&user).Error
+	err := u.db.WithContext(ctx).Where("phone = ?", phone).Find(&user).Error
 	if err != nil {
 		return User{}, err
 	}
@@ -39,7 +43,7 @@ func (u *UserDao) FindByPhone(ctx context.Context, phone string) (User, error) {
 
 func (u *UserDao) FindById(ctx context.Context, id int) (User, error) {
 	var user User
-	err := u.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
+	err := u.db.WithContext(ctx).Where("id = ?", id).Find(&user).Error
 	if err != nil {
 		return User{}, err
 	}

@@ -8,7 +8,7 @@ package ioc
 
 import (
 	"github.com/crazyfrankie/cloudstorage/app/gateway/api"
-	"github.com/crazyfrankie/cloudstorage/app/gateway/mws"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.etcd.io/etcd/client/v3"
 	"time"
@@ -42,16 +42,20 @@ func InitRegistry() *clientv3.Client {
 }
 
 func InitMws() []gin.HandlerFunc {
-	return []gin.HandlerFunc{mws.NewAuthBuilder().
-		IgnorePath("/api/user/send-code").
-		IgnorePath("/api/user/verify-code").
-		Auth(),
+	return []gin.HandlerFunc{cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8081"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}),
 	}
 }
 
-func InitGin(mws2 []gin.HandlerFunc, user *api.UserHandler, file *api.FileHandler) *gin.Engine {
+func InitGin(mws []gin.HandlerFunc, user *api.UserHandler, file *api.FileHandler) *gin.Engine {
 	server := gin.Default()
-	server.Use(mws2...)
+	server.Use(mws...)
 
 	user.RegisterRoute(server)
 	file.RegisterRoute(server)

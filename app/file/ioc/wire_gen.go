@@ -50,7 +50,7 @@ func InitDB() *gorm.DB {
 		panic(err)
 	}
 
-	db.AutoMigrate(&dao.File{})
+	db.AutoMigrate(&dao.File{}, &dao.FileStore{}, &dao.Folder{})
 
 	return db
 }
