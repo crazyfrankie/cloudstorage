@@ -1,6 +1,7 @@
 package response
 
 import (
+	"fmt"
 	"github.com/crazyfrankie/cloudstorage/app/gateway/common/consts"
 	"net/http"
 
@@ -23,6 +24,7 @@ func Success(c *gin.Context, data any) {
 }
 
 func Error(c *gin.Context, err error) {
+	fmt.Println(err)
 	if bizErr, ok := gerrors.FromBizStatusError(err); ok {
 		c.JSON(http.StatusOK, Response{
 			Code:    bizErr.BizStatusCode(),

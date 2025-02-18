@@ -27,7 +27,8 @@ type Server struct {
 }
 
 func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.MaxRecvMsgSize(10*1024*1024),
+		grpc.MaxSendMsgSize(10*1024*1024))
 	file.RegisterFileServiceServer(s, f)
 
 	return &Server{

@@ -30,6 +30,7 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 	fileGroup := r.Group("/api/files", mws.Auth())
 	{
 		fileGroup.POST("/upload", h.Upload())
+		fileGroup.POST("/large-upload", h.UploadLargeFile())
 		fileGroup.GET("/download/:id", h.Download())
 		fileGroup.GET("/preview/:id", h.Preview())
 		fileGroup.POST("/search", h.SearchFiles())
@@ -41,8 +42,7 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 	}
 }
 
-// Upload v1 暂时只实现小文件的上传
-// TODO 大文件上传也即大文件分块上传以及随之而来的断点续传功能
+// Upload 小文件的上传
 func (h *FileHandler) Upload() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		f, header, err := c.Request.FormFile("file")
@@ -96,6 +96,98 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 		resp, err := h.cli.Upload(c.Request.Context(), &file.UploadRequest{
 			Metadata: meta,
 			Data:     data,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, resp)
+	}
+}
+
+// UploadLargeFile 大文件上传也即大文件分块上传和断点续传
+func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		const chunkSize = 5 * 1024 * 1024 // 5MB
+		f, header, err := c.Request.FormFile("file")
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+		defer f.Close()
+
+		// 获取文件基本信息
+		name := header.Filename
+		path := consts.BasePath + name
+		size := header.Size
+		typ := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
+		claims := c.MustGet("claims").(*mws.Claim)
+
+		folder, ok := c.GetPostForm("folder")
+		if !ok {
+			response.Error(c, errors.New("doesn't contain parent id"))
+			return
+		}
+		folderId, _ := strconv.Atoi(folder)
+		// 初始化分块上传
+		meta := &file.FileMetaData{
+			Name:        name,
+			Size:        size,
+			Path:        path,
+			ContentType: typ,
+			UserId:      claims.UserId,
+			FolderId:    int64(folderId),
+		}
+
+		initResp, err := h.cli.InitMultipartUpload(c.Request.Context(), &file.InitMultipartUploadRequest{
+			Metadata: meta,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		// 分块上传
+		var parts []*file.PartInfo
+		buffer := make([]byte, chunkSize)
+		partNumber := 1
+
+		for {
+			n, err := f.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				response.Error(c, err)
+				return
+			}
+
+			// 上传分块
+			partResp, err := h.cli.UploadPart(c.Request.Context(), &file.UploadPartRequest{
+				UploadId:   initResp.UploadId,
+				ObjectName: name,
+				PartNumber: int32(partNumber),
+				Data:       buffer[:n],
+			})
+			if err != nil {
+				response.Error(c, err)
+				return
+			}
+
+			parts = append(parts, &file.PartInfo{
+				PartNumber: int32(partNumber),
+				Etag:       partResp.Etag,
+			})
+			partNumber++
+		}
+
+		// 完成上传
+		resp, err := h.cli.CompleteMultipartUpload(c.Request.Context(), &file.CompleteMultipartUploadRequest{
+			UploadId:   initResp.UploadId,
+			Parts:      parts,
+			ObjectName: name,
+			UserId:     claims.UserId,
 		})
 		if err != nil {
 			response.Error(c, err)

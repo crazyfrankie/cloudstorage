@@ -13,8 +13,13 @@ import (
 func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 	builder, err := resolver.NewBuilder(cli)
 	conn, err := grpc.Dial("etcd:///service/file",
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(10*1024*1024), // 10MB
+			grpc.MaxCallRecvMsgSize(10*1024*1024),
+		),
 		grpc.WithResolvers(builder),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		panic(err)
 	}

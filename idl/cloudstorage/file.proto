@@ -162,6 +162,37 @@ enum PreviewType {
   TEXT = 4;
 }
 
+message InitMultipartUploadRequest {
+  file.FileMetaData metadata = 1;
+}
+
+message InitMultipartUploadResponse {
+  string upload_id = 1;
+}
+
+message UploadPartRequest {
+  string upload_id = 1;
+  string object_name = 2;  // 添加文件名字段
+  int32 part_number = 3;
+  bytes data = 4;
+}
+
+message UploadPartResponse {
+  string etag = 1;
+}
+
+message CompleteMultipartUploadRequest {
+  string upload_id = 1;
+  repeated PartInfo parts = 2;
+  string object_name = 3;
+  int32 user_id = 4;
+}
+
+message PartInfo {
+  int32 part_number = 1;
+  string etag = 2;
+}
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -176,4 +207,7 @@ service FileService {
   rpc DeleteFolder(DeleteFolderRequest) returns (DeleteFolderResponse);
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Preview(PreviewRequest) returns (PreviewResponse);
+  rpc InitMultipartUpload(InitMultipartUploadRequest) returns (InitMultipartUploadResponse);
+  rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
+  rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (UploadResponse);
 }

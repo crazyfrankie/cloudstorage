@@ -1,13 +1,17 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/dao"
@@ -71,6 +75,82 @@ func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file
 		Size:     meta.GetSize(),
 		UserId:   meta.GetUserId(),
 		FolderId: meta.GetFolderId(),
+	}
+
+	err = s.repo.CreateFile(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file.UploadResponse{
+		Id: int32(f.Id),
+	}, nil
+}
+
+func (s *FileServer) InitMultipartUpload(ctx context.Context, req *file.InitMultipartUploadRequest) (*file.InitMultipartUploadResponse, error) {
+	meta := req.GetMetadata()
+
+	// 检查存储空间
+	enough, err := s.repo.QueryCapacity(ctx, meta.GetUserId(), meta.GetSize())
+	if err != nil {
+		return nil, err
+	}
+	if !enough {
+		return nil, errors.New("insufficient storage capacity")
+	}
+
+	// 创建真实的分片上传任务
+	uploadID, err := s.minio.CreateMultipartUpload(ctx, s.minio.BucketName, meta.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file.InitMultipartUploadResponse{
+		UploadId: uploadID,
+	}, nil
+}
+
+func (s *FileServer) UploadPart(ctx context.Context, req *file.UploadPartRequest) (*file.UploadPartResponse, error) {
+	reader := bytes.NewReader(req.Data)
+	partInfo, err := s.minio.PutObjectPart(
+		ctx,
+		s.minio.BucketName,
+		req.ObjectName,
+		req.UploadId,
+		int(req.PartNumber),
+		reader,
+		int64(len(req.Data)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file.UploadPartResponse{
+		Etag: partInfo.ETag,
+	}, nil
+}
+
+func (s *FileServer) CompleteMultipartUpload(ctx context.Context, req *file.CompleteMultipartUploadRequest) (*file.UploadResponse, error) {
+	var completeParts []minio.CompletePart
+	for _, part := range req.Parts {
+		completeParts = append(completeParts, minio.CompletePart{
+			PartNumber: int(part.PartNumber),
+			ETag:       part.Etag,
+		})
+	}
+
+	// 完成分片上传
+	result, err := s.minio.CompleteMultipartUpload(ctx, s.minio.BucketName, req.GetObjectName(), req.GetUploadId(), completeParts)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建文件记录
+	f := &dao.File{
+		Name:   req.ObjectName,
+		UserId: req.UserId,
+		Size:   result.Size,
+		Type:   filepath.Ext(req.ObjectName),
 	}
 
 	err = s.repo.CreateFile(ctx, f)
@@ -273,7 +353,7 @@ func (s *FileServer) DeleteFolder(ctx context.Context, req *file.DeleteFolderReq
 	return &file.DeleteFolderResponse{}, nil
 }
 
-func (s *FileServer) SearchFiles(ctx context.Context, req *file.SearchRequest) (*file.SearchResponse, error) {
+func (s *FileServer) Search(ctx context.Context, req *file.SearchRequest) (*file.SearchResponse, error) {
 	fs, fds, err := s.repo.Search(ctx, req.GetUserId(), req.GetQuery(), req.GetPage(), req.GetSize())
 	if err != nil {
 		return nil, err

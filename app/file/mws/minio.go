@@ -3,6 +3,7 @@ package mws
 import (
 	"bytes"
 	"context"
+	"io"
 	"log"
 	"net/url"
 	"time"
@@ -14,12 +15,15 @@ import (
 
 type MinioServer struct {
 	client     *minio.Client
+	core       *minio.Core
 	BucketName string
 }
 
 func NewMinioServer(client *minio.Client) *MinioServer {
 	name := config.GetConf().Minio.BucketName[0]
-	server := &MinioServer{client: client, BucketName: name}
+	// 从 client 获取 core
+	core := &minio.Core{Client: client}
+	server := &MinioServer{client: client, BucketName: name, core: core}
 
 	server.MakeBucket(context.Background(), name)
 
@@ -53,6 +57,25 @@ func (m *MinioServer) GetObject(ctx context.Context, bucketName, filename string
 
 func (m *MinioServer) PresignedGetObject(ctx context.Context, bucketName, filename string, expiration time.Duration) (*url.URL, error) {
 	reqParams := make(url.Values)
-
 	return m.client.PresignedGetObject(ctx, bucketName, filename, expiration, reqParams)
+}
+
+func (m *MinioServer) CreateMultipartUpload(ctx context.Context, bucketName, filename string) (string, error) {
+	uploadID, err := m.core.NewMultipartUpload(ctx, bucketName, filename, minio.PutObjectOptions{})
+	if err != nil {
+		return "", err
+	}
+	return uploadID, nil
+}
+
+// PutObjectPart 上传分片
+func (m *MinioServer) PutObjectPart(ctx context.Context, bucketName, objectName, uploadID string, partNumber int,
+	data io.Reader, size int64) (minio.ObjectPart, error) {
+	return m.core.PutObjectPart(ctx, bucketName, objectName, uploadID, partNumber, data, size, minio.PutObjectPartOptions{})
+}
+
+// CompleteMultipartUpload 完成分片上传
+func (m *MinioServer) CompleteMultipartUpload(ctx context.Context, bucketName, objectName, uploadID string,
+	parts []minio.CompletePart) (minio.UploadInfo, error) {
+	return m.core.CompleteMultipartUpload(ctx, bucketName, objectName, uploadID, parts, minio.PutObjectOptions{})
 }
