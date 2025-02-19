@@ -193,6 +193,22 @@ message PartInfo {
   string etag = 2;
 }
 
+message DownloadTaskRequest {
+  int32 user_id = 1;
+  repeated FileDownloadInfo files = 2;
+  string folder_name = 3;
+}
+
+message FileDownloadInfo {
+  int64 file_id = 1;
+  int32 order_num = 2;
+  string path = 3;
+}
+
+message DownloadTaskResponse {
+  string task_id = 1;
+}
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -210,4 +226,5 @@ service FileService {
   rpc InitMultipartUpload(InitMultipartUploadRequest) returns (InitMultipartUploadResponse);
   rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
   rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (UploadResponse);
+  rpc DownloadTask(DownloadTaskRequest) returns (DownloadResponse);
 }

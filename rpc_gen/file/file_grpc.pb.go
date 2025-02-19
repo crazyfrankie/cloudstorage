@@ -35,6 +35,7 @@ const (
 	FileService_InitMultipartUpload_FullMethodName     = "/file.FileService/InitMultipartUpload"
 	FileService_UploadPart_FullMethodName              = "/file.FileService/UploadPart"
 	FileService_CompleteMultipartUpload_FullMethodName = "/file.FileService/CompleteMultipartUpload"
+	FileService_DownloadTask_FullMethodName            = "/file.FileService/DownloadTask"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -57,6 +58,7 @@ type FileServiceClient interface {
 	InitMultipartUpload(ctx context.Context, in *InitMultipartUploadRequest, opts ...grpc.CallOption) (*InitMultipartUploadResponse, error)
 	UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error)
 	CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
+	DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadResponse, error)
 }
 
 type fileServiceClient struct {
@@ -236,6 +238,16 @@ func (c *fileServiceClient) CompleteMultipartUpload(ctx context.Context, in *Com
 	return out, nil
 }
 
+func (c *fileServiceClient) DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DownloadResponse)
+	err := c.cc.Invoke(ctx, FileService_DownloadTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileServiceServer is the server API for FileService service.
 // All implementations must embed UnimplementedFileServiceServer
 // for forward compatibility.
@@ -256,6 +268,7 @@ type FileServiceServer interface {
 	InitMultipartUpload(context.Context, *InitMultipartUploadRequest) (*InitMultipartUploadResponse, error)
 	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
 	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error)
+	DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -313,6 +326,9 @@ func (UnimplementedFileServiceServer) UploadPart(context.Context, *UploadPartReq
 }
 func (UnimplementedFileServiceServer) CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteMultipartUpload not implemented")
+}
+func (UnimplementedFileServiceServer) DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadTask not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -616,6 +632,24 @@ func _FileService_CompleteMultipartUpload_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_DownloadTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).DownloadTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_DownloadTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).DownloadTask(ctx, req.(*DownloadTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -682,6 +716,10 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CompleteMultipartUpload",
 			Handler:    _FileService_CompleteMultipartUpload_Handler,
+		},
+		{
+			MethodName: "DownloadTask",
+			Handler:    _FileService_DownloadTask_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

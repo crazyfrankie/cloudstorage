@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/cache"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"os"
@@ -19,13 +21,14 @@ import (
 )
 
 type FileServer struct {
-	repo  *repository.UploadRepo
-	minio *mws.MinioServer
+	repo   *repository.UploadRepo
+	minio  *mws.MinioServer
+	worker *DownloadWorker
 	file.UnimplementedFileServiceServer
 }
 
-func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer) *FileServer {
-	return &FileServer{repo: repo, minio: minio}
+func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker *DownloadWorker) *FileServer {
+	return &FileServer{repo: repo, minio: minio, worker: worker}
 }
 
 func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file.UploadResponse, error) {
@@ -227,6 +230,49 @@ func (s *FileServer) DownloadStream(req *file.DownloadRequest, stream file.FileS
 	defer obj.Close()
 
 	return s.streamFile(obj, stream)
+}
+
+// DownloadTask 处理下载请求
+func (s *FileServer) DownloadTask(ctx context.Context, req *file.DownloadTaskRequest) (*file.DownloadTaskResponse, error) {
+	taskId := uuid.New().String()
+
+	// 获取文件信息
+	downloadFiles := make([]*cache.DownloadedFile, 0, len(req.Files))
+	var totalSize int64
+
+	for _, f := range req.Files {
+		fileInfo, err := s.repo.GetFile(ctx, int32(f.FileId), req.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		downloadFiles = append(downloadFiles, &cache.DownloadedFile{
+			FileId: f.FileId,
+			Name:   fileInfo.Name,
+			Path:   f.Path,
+			Size:   fileInfo.Size,
+			Status: "pending",
+		})
+		totalSize += fileInfo.Size
+	}
+
+	task := &cache.DownloadTask{
+		UserId:     req.UserId,
+		Status:     "pending",
+		FolderName: req.FolderName,
+		TotalSize:  totalSize,
+		Progress:   0,
+		CreatedAt:  time.Now(),
+		Files:      downloadFiles,
+	}
+
+	if err := s.repo.CreateDownloadTask(ctx, taskId, task); err != nil {
+		return nil, err
+	}
+
+	return &file.DownloadTaskResponse{
+		TaskId: taskId,
+	}, nil
 }
 
 func (s *FileServer) GetFile(ctx context.Context, req *file.GetFileRequest) (*file.GetFileResponse, error) {

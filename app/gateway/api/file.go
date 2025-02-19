@@ -310,6 +310,51 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 	}
 }
 
+// BatchDownloadFiles 下载队列
+func (h *FileHandler) BatchDownloadFiles() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		type BatchDownloadRequest struct {
+			Files []struct {
+				FileId   int64  `json:"fileId"`
+				OrderNum int32  `json:"orderNum"` // 下载顺序
+				Path     string `json:"path"`     // 文件在文件夹中的路径
+			} `json:"files"`
+			FolderName string `json:"folderName"` // 如果是文件夹下载，保存文件夹名称
+		}
+
+		var req BatchDownloadRequest
+		if err := c.Bind(&req); err != nil {
+			response.Error(c, err)
+			return
+		}
+		claims := c.MustGet("claims").(*mws.Claim)
+
+		files := make([]*file.FileDownloadInfo, 0, len(req.Files))
+		for _, f := range req.Files {
+			files = append(files, &file.FileDownloadInfo{
+				FileId:   f.FileId,
+				OrderNum: f.OrderNum,
+				Path:     f.Path,
+			})
+		}
+
+		// 创建下载任务
+		resp, err := h.cli.DownloadTask(c.Request.Context(), &file.DownloadTaskRequest{
+			UserId:     claims.UserId,
+			Files:      files,
+			FolderName: req.FolderName,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, gin.H{
+			"taskId": resp.TaskId,
+		})
+	}
+}
+
 // CreateFolder 创建文件夹
 func (h *FileHandler) CreateFolder() gin.HandlerFunc {
 	return func(c *gin.Context) {
