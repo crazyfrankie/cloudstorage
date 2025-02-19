@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 
@@ -51,6 +53,13 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 			return
 		}
 		defer f.Close()
+
+		// 根据大小选择上传方式
+		if header.Size > consts.SmallFileSizeLimit {
+			// 重定向到大文件上传
+			h.UploadLargeFile()(c)
+			return
+		}
 
 		var hash string
 		hash, err = util.FileHash(f)
@@ -130,7 +139,7 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 			return
 		}
 		folderId, _ := strconv.Atoi(folder)
-		// 初始化分块上传
+
 		meta := &file.FileMetaData{
 			Name:        name,
 			Size:        size,
@@ -140,6 +149,7 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 			FolderId:    int64(folderId),
 		}
 
+		// 初始化分块上传，获取uploadId
 		initResp, err := h.cli.InitMultipartUpload(c.Request.Context(), &file.InitMultipartUploadRequest{
 			Metadata: meta,
 		})
@@ -148,39 +158,74 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 			return
 		}
 
-		// 分块上传
-		var parts []*file.PartInfo
-		buffer := make([]byte, chunkSize)
-		partNumber := 1
+		// 并发上传分块
+		const workerCount = 3
+		jobs := make(chan struct {
+			number int32
+			data   []byte
+		}, workerCount)
+		results := make(chan *file.PartInfo, workerCount)
 
+		// 启动工作协程
+		var wg sync.WaitGroup
+		for i := 0; i < workerCount; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for job := range jobs {
+					partResp, err := h.cli.UploadPart(c.Request.Context(), &file.UploadPartRequest{
+						UploadId:   initResp.UploadId,
+						ObjectName: name,
+						PartNumber: job.number,
+						Data:       job.data,
+					})
+					if err != nil {
+						// 处理错误
+						continue
+					}
+					results <- &file.PartInfo{
+						PartNumber: job.number,
+						Etag:       partResp.Etag,
+					}
+				}
+			}()
+		}
+
+		// 读取文件并分发任务
+		partNumber := int32(1)
 		for {
+			buffer := make([]byte, consts.ChunkSize)
 			n, err := f.Read(buffer)
 			if err == io.EOF {
 				break
 			}
-			if err != nil {
-				response.Error(c, err)
-				return
-			}
 
-			// 上传分块
-			partResp, err := h.cli.UploadPart(c.Request.Context(), &file.UploadPartRequest{
-				UploadId:   initResp.UploadId,
-				ObjectName: name,
-				PartNumber: int32(partNumber),
-				Data:       buffer[:n],
-			})
-			if err != nil {
-				response.Error(c, err)
-				return
+			jobs <- struct {
+				number int32
+				data   []byte
+			}{
+				number: partNumber,
+				data:   buffer[:n],
 			}
-
-			parts = append(parts, &file.PartInfo{
-				PartNumber: int32(partNumber),
-				Etag:       partResp.Etag,
-			})
 			partNumber++
 		}
+		close(jobs)
+
+		// 收集结果
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
+
+		var parts []*file.PartInfo
+		for part := range results {
+			parts = append(parts, part)
+		}
+
+		// 按照 PartNumber 对 parts 排序
+		sort.Slice(parts, func(i, j int) bool {
+			return parts[i].PartNumber < parts[j].PartNumber
+		})
 
 		// 完成上传
 		resp, err := h.cli.CompleteMultipartUpload(c.Request.Context(), &file.CompleteMultipartUploadRequest{
@@ -198,6 +243,7 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 	}
 }
 
+// Download 单个文件下载
 func (h *FileHandler) Download() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -227,11 +273,8 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 				response.Error(c, err)
 				return
 			}
-			c.Header("Content-Description", "File Transfer")
-			c.Header("Content-Transfer-Encoding", "binary")
-			c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", url.QueryEscape(fileName)))
+			setHeader(c, fileName, mimeType)
 			c.Header("Content-Length", strconv.FormatInt(size, 10))
-			c.Header("Cache-Control", "no-cache")
 			c.Data(http.StatusOK, mimeType, resp.GetData())
 			return
 		}
@@ -250,15 +293,19 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 		c.Header("Content-Transfer-Encoding", "binary")
 		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", url.QueryEscape(fileName)))
 		c.Header("Content-Type", mimeType)
-		c.Header("Content-Length", strconv.FormatInt(size, 10))
 		c.Header("Cache-Control", "no-cache")
+
+		// 显式设置 chunked transfer encoding
+		c.Header("Transfer-Encoding", "true")
+
+		// 使用 Stream 写入响应
 		c.Stream(func(w io.Writer) bool {
 			chunk, err := stream.Recv()
 			if err != nil {
 				return false
 			}
-			w.Write(chunk.Data)
-			return true
+			_, err = w.Write(chunk.Data)
+			return err == nil
 		})
 	}
 }
@@ -490,4 +537,12 @@ func getMimeType(ext string) string {
 	default:
 		return "application/octet-stream"
 	}
+}
+
+func setHeader(c *gin.Context, filename, mimeType string) {
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", url.QueryEscape(filename)))
+	c.Header("Content-Type", mimeType)
+	c.Header("Cache-Control", "no-cache")
 }

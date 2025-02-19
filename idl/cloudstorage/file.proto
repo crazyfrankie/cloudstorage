@@ -172,7 +172,7 @@ message InitMultipartUploadResponse {
 
 message UploadPartRequest {
   string upload_id = 1;
-  string object_name = 2;  // 添加文件名字段
+  string object_name = 2;
   int32 part_number = 3;
   bytes data = 4;
 }

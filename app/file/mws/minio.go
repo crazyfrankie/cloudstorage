@@ -3,7 +3,6 @@ package mws
 import (
 	"bytes"
 	"context"
-	"io"
 	"log"
 	"net/url"
 	"time"
@@ -70,8 +69,8 @@ func (m *MinioServer) CreateMultipartUpload(ctx context.Context, bucketName, fil
 
 // PutObjectPart 上传分片
 func (m *MinioServer) PutObjectPart(ctx context.Context, bucketName, objectName, uploadID string, partNumber int,
-	data io.Reader, size int64) (minio.ObjectPart, error) {
-	return m.core.PutObjectPart(ctx, bucketName, objectName, uploadID, partNumber, data, size, minio.PutObjectPartOptions{})
+	data []byte, size int64) (minio.ObjectPart, error) {
+	return m.core.PutObjectPart(ctx, bucketName, objectName, uploadID, partNumber, bytes.NewReader(data), size, minio.PutObjectPartOptions{})
 }
 
 // CompleteMultipartUpload 完成分片上传

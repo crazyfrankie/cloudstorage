@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -87,9 +86,9 @@ func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file
 	}, nil
 }
 
+// InitMultipartUpload 初始化分块上传
 func (s *FileServer) InitMultipartUpload(ctx context.Context, req *file.InitMultipartUploadRequest) (*file.InitMultipartUploadResponse, error) {
 	meta := req.GetMetadata()
-
 	// 检查存储空间
 	enough, err := s.repo.QueryCapacity(ctx, meta.GetUserId(), meta.GetSize())
 	if err != nil {
@@ -110,27 +109,23 @@ func (s *FileServer) InitMultipartUpload(ctx context.Context, req *file.InitMult
 	}, nil
 }
 
+// UploadPart 上传分块
 func (s *FileServer) UploadPart(ctx context.Context, req *file.UploadPartRequest) (*file.UploadPartResponse, error) {
-	reader := bytes.NewReader(req.Data)
-	partInfo, err := s.minio.PutObjectPart(
-		ctx,
-		s.minio.BucketName,
-		req.ObjectName,
-		req.UploadId,
-		int(req.PartNumber),
-		reader,
-		int64(len(req.Data)),
-	)
+	// 使用 MinIO 的 Core API 上传分块
+	partInfo, err := s.minio.PutObjectPart(ctx, s.minio.BucketName, req.GetObjectName(), req.GetUploadId(),
+		int(req.GetPartNumber()), req.GetData(), int64(len(req.GetData())))
 	if err != nil {
 		return nil, err
 	}
 
 	return &file.UploadPartResponse{
-		Etag: partInfo.ETag,
+		Etag: partInfo.ETag, // 返回分块的ETag用于后续合并
 	}, nil
 }
 
+// CompleteMultipartUpload 完成分块上传
 func (s *FileServer) CompleteMultipartUpload(ctx context.Context, req *file.CompleteMultipartUploadRequest) (*file.UploadResponse, error) {
+	// 将所有分块信息转换为 MinIO 需要的格式
 	var completeParts []minio.CompletePart
 	for _, part := range req.Parts {
 		completeParts = append(completeParts, minio.CompletePart{
@@ -139,8 +134,20 @@ func (s *FileServer) CompleteMultipartUpload(ctx context.Context, req *file.Comp
 		})
 	}
 
-	// 完成分片上传
-	result, err := s.minio.CompleteMultipartUpload(ctx, s.minio.BucketName, req.GetObjectName(), req.GetUploadId(), completeParts)
+	// 调用 MinIO 完成分块上传
+	_, err := s.minio.CompleteMultipartUpload(ctx, s.minio.BucketName, req.GetObjectName(), req.GetUploadId(), completeParts)
+	if err != nil {
+		return nil, err
+	}
+
+	// 完成上传后，获取对象信息
+	obj, err := s.minio.GetObject(ctx, s.minio.BucketName, req.GetObjectName())
+	if err != nil {
+		return nil, err
+	}
+	defer obj.Close()
+	// 获取对象详细信息
+	info, err := obj.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -149,8 +156,8 @@ func (s *FileServer) CompleteMultipartUpload(ctx context.Context, req *file.Comp
 	f := &dao.File{
 		Name:   req.ObjectName,
 		UserId: req.UserId,
-		Size:   result.Size,
-		Type:   filepath.Ext(req.ObjectName),
+		Size:   info.Size,
+		Type:   filepath.Ext(req.ObjectName)[1:],
 	}
 
 	err = s.repo.CreateFile(ctx, f)
