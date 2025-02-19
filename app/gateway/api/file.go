@@ -35,6 +35,9 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 		fileGroup.POST("/large-upload", h.UploadLargeFile())
 		fileGroup.GET("/download/:id", h.Download())
 		fileGroup.GET("/preview/:id", h.Preview())
+		fileGroup.POST("/download/task-queue", h.BatchDownloadFiles())
+		fileGroup.GET("/download/task/:taskId", h.GetDownloadTask())
+		fileGroup.POST("/download/resume", h.ResumeDownload())
 		fileGroup.POST("/search", h.SearchFiles())
 		fileGroup.POST("/move", h.MoveFile())
 		fileGroup.POST("/delete", h.DeleteFile())
@@ -118,7 +121,6 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 // UploadLargeFile 大文件上传也即大文件分块上传和断点续传
 func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		const chunkSize = 5 * 1024 * 1024 // 5MB
 		f, header, err := c.Request.FormFile("file")
 		if err != nil {
 			response.Error(c, err)
@@ -126,6 +128,14 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 		}
 		defer f.Close()
 
+		var hash string
+		hash, err = util.FileHash(f)
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		f.Seek(0, 0)
 		// 获取文件基本信息
 		name := header.Filename
 		path := consts.BasePath + name
@@ -140,18 +150,11 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 		}
 		folderId, _ := strconv.Atoi(folder)
 
-		meta := &file.FileMetaData{
-			Name:        name,
-			Size:        size,
-			Path:        path,
-			ContentType: typ,
-			UserId:      claims.UserId,
-			FolderId:    int64(folderId),
-		}
-
 		// 初始化分块上传，获取uploadId
 		initResp, err := h.cli.InitMultipartUpload(c.Request.Context(), &file.InitMultipartUploadRequest{
-			Metadata: meta,
+			Name:   name,
+			Size:   size,
+			UserId: claims.UserId,
 		})
 		if err != nil {
 			response.Error(c, err)
@@ -233,6 +236,10 @@ func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
 			Parts:      parts,
 			ObjectName: name,
 			UserId:     claims.UserId,
+			Hash:       hash,
+			Path:       path,
+			FolderId:   int64(folderId),
+			Typ:        typ,
 		})
 		if err != nil {
 			response.Error(c, err)
@@ -251,7 +258,7 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 
 		fileId, _ := strconv.Atoi(id)
 		resp, err := h.cli.GetFile(c.Request.Context(), &file.GetFileRequest{
-			FileId: int32(fileId),
+			FileId: int64(fileId),
 			UserId: claims.UserId,
 		})
 		if err != nil {
@@ -266,7 +273,7 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 		if resp.GetFile().GetSize() <= sizeThreshold {
 			// 小文件直接下载
 			resp, err := h.cli.Download(c.Request.Context(), &file.DownloadRequest{
-				FileId: int32(fileId),
+				FileId: int64(fileId),
 				UserId: claims.UserId,
 			})
 			if err != nil {
@@ -281,7 +288,7 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 
 		// 大文件流式下载
 		stream, err := h.cli.DownloadStream(c.Request.Context(), &file.DownloadRequest{
-			FileId: int32(fileId),
+			FileId: int64(fileId),
 			UserId: claims.UserId,
 		})
 		if err != nil {
@@ -289,12 +296,7 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 			return
 		}
 
-		c.Header("Content-Description", "File Transfer")
-		c.Header("Content-Transfer-Encoding", "binary")
-		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", url.QueryEscape(fileName)))
-		c.Header("Content-Type", mimeType)
-		c.Header("Cache-Control", "no-cache")
-
+		setHeader(c, fileName, mimeType)
 		// 显式设置 chunked transfer encoding
 		c.Header("Transfer-Encoding", "true")
 
@@ -593,7 +595,7 @@ func (h *FileHandler) Preview() gin.HandlerFunc {
 		claims := c.MustGet("claims").(*mws.Claim)
 
 		resp, err := h.cli.Preview(c.Request.Context(), &file.PreviewRequest{
-			FileId: int32(fileId),
+			FileId: int64(fileId),
 			UserId: claims.UserId,
 		})
 		if err != nil {

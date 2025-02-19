@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -91,9 +90,8 @@ func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file
 
 // InitMultipartUpload 初始化分块上传
 func (s *FileServer) InitMultipartUpload(ctx context.Context, req *file.InitMultipartUploadRequest) (*file.InitMultipartUploadResponse, error) {
-	meta := req.GetMetadata()
 	// 检查存储空间
-	enough, err := s.repo.QueryCapacity(ctx, meta.GetUserId(), meta.GetSize())
+	enough, err := s.repo.QueryCapacity(ctx, req.GetUserId(), req.GetSize())
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +100,7 @@ func (s *FileServer) InitMultipartUpload(ctx context.Context, req *file.InitMult
 	}
 
 	// 创建真实的分片上传任务
-	uploadID, err := s.minio.CreateMultipartUpload(ctx, s.minio.BucketName, meta.Name)
+	uploadID, err := s.minio.CreateMultipartUpload(ctx, s.minio.BucketName, req.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -157,10 +155,13 @@ func (s *FileServer) CompleteMultipartUpload(ctx context.Context, req *file.Comp
 
 	// 创建文件记录
 	f := &dao.File{
-		Name:   req.ObjectName,
-		UserId: req.UserId,
-		Size:   info.Size,
-		Type:   filepath.Ext(req.ObjectName)[1:],
+		Name:     req.GetObjectName(),
+		UserId:   req.GetUserId(),
+		Size:     info.Size,
+		Type:     req.GetTyp(),
+		Hash:     req.GetHash(),
+		Path:     req.GetPath(),
+		FolderId: req.GetFolderId(),
 	}
 
 	err = s.repo.CreateFile(ctx, f)
@@ -232,7 +233,7 @@ func (s *FileServer) DownloadStream(req *file.DownloadRequest, stream file.FileS
 	return s.streamFile(obj, stream)
 }
 
-// DownloadTask 处理下载请求
+// DownloadTask 处理下载队列
 func (s *FileServer) DownloadTask(ctx context.Context, req *file.DownloadTaskRequest) (*file.DownloadTaskResponse, error) {
 	taskId := uuid.New().String()
 
@@ -241,7 +242,7 @@ func (s *FileServer) DownloadTask(ctx context.Context, req *file.DownloadTaskReq
 	var totalSize int64
 
 	for _, f := range req.Files {
-		fileInfo, err := s.repo.GetFile(ctx, int32(f.FileId), req.UserId)
+		fileInfo, err := s.repo.GetFile(ctx, f.FileId, req.UserId)
 		if err != nil {
 			return nil, err
 		}

@@ -75,7 +75,7 @@ func (d *UploadDao) CreateFile(ctx context.Context, file *File) error {
 	return nil
 }
 
-func (d *UploadDao) GetFile(ctx context.Context, fid, uid int32) (File, error) {
+func (d *UploadDao) GetFile(ctx context.Context, fid int64, uid int32) (File, error) {
 	var file File
 	err := d.db.WithContext(ctx).Model(&File{}).Where("id = ? AND user_id = ?", fid, uid).Find(&file).Error
 	if err != nil {

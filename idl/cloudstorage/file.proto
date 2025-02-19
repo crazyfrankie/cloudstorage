@@ -71,7 +71,7 @@ message ListFolderResponse {
 }
 
 message GetFileRequest {
-  int32 file_id = 1;
+  int64 file_id = 1;
   int32 user_id = 2;
 }
 
@@ -80,7 +80,7 @@ message GetFileResponse {
 }
 
 message DownloadRequest {
-  int32 file_id = 1;
+  int64 file_id = 1;
   int32 user_id = 2;
 }
 
@@ -144,7 +144,7 @@ message SearchResponse {
 }
 
 message PreviewRequest {
-  int32 file_id = 1;
+  int64 file_id = 1;
   int32 user_id = 2;
 }
 
@@ -163,7 +163,9 @@ enum PreviewType {
 }
 
 message InitMultipartUploadRequest {
-  file.FileMetaData metadata = 1;
+  int32 user_id = 1;
+  int64 size = 2;
+  string name = 3;
 }
 
 message InitMultipartUploadResponse {
@@ -186,6 +188,10 @@ message CompleteMultipartUploadRequest {
   repeated PartInfo parts = 2;
   string object_name = 3;
   int32 user_id = 4;
+  string hash = 5;
+  string path = 6;
+  int64 folder_id = 7;
+  string typ = 8;
 }
 
 message PartInfo {

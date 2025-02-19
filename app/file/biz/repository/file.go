@@ -20,7 +20,7 @@ func (r *UploadRepo) CreateFile(ctx context.Context, file *dao.File) error {
 	return r.dao.CreateFile(ctx, file)
 }
 
-func (r *UploadRepo) GetFile(ctx context.Context, fid, uid int32) (dao.File, error) {
+func (r *UploadRepo) GetFile(ctx context.Context, fid int64, uid int32) (dao.File, error) {
 	return r.dao.GetFile(ctx, fid, uid)
 }
 
