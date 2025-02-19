@@ -209,6 +209,39 @@ message DownloadTaskResponse {
   string task_id = 1;
 }
 
+message GetDownloadTaskRequest {
+  string task_id = 1;
+  int32 user_id = 2;
+}
+
+message GetDownloadTaskResponse {
+  string task_id = 1;
+  string  status = 2;        // pending processing completed failed
+  string folder_name = 3;
+  int64 total_size = 4;
+  int64 progress = 5;
+  repeated FileProgress files = 6;
+}
+
+message FileProgress {
+  int64 file_id = 1;
+  string name = 2;
+  string path = 3;
+  int64 size = 4;
+  string  status = 5;      // pending processing completed failed
+  int64 downloaded = 6;    // 已下载大小
+}
+
+message ResumeDownloadRequest {
+  string task_id = 1;     // 原任务ID
+  int32 user_id = 2;      // 用户ID
+  repeated int64 file_ids = 3;  // 需要继续下载的文件ID列表
+}
+
+message ResumeDownloadResponse {
+  string new_task_id = 1;  // 新的任务ID
+}
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -226,5 +259,7 @@ service FileService {
   rpc InitMultipartUpload(InitMultipartUploadRequest) returns (InitMultipartUploadResponse);
   rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
   rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (UploadResponse);
-  rpc DownloadTask(DownloadTaskRequest) returns (DownloadResponse);
+  rpc DownloadTask(DownloadTaskRequest) returns (DownloadTaskResponse);
+  rpc GetDownloadTask(GetDownloadTaskRequest) returns (GetDownloadTaskResponse);
+  rpc ResumeDownload(ResumeDownloadRequest) returns (ResumeDownloadResponse);
 }

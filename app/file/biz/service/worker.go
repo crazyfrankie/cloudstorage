@@ -2,12 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
@@ -15,15 +13,19 @@ import (
 	"github.com/crazyfrankie/cloudstorage/app/file/mws"
 )
 
-type DownloadWorker struct {
+type DownloadWorker interface {
+	Run()
+}
+
+type RedisWorker struct {
 	repo      *repository.UploadRepo
 	minio     *mws.MinioServer
 	stopCh    chan struct{}
 	workerNum int
 }
 
-func NewDownloadWorker(repo *repository.UploadRepo, minio *mws.MinioServer) *DownloadWorker {
-	return &DownloadWorker{
+func NewRedisWorker(repo *repository.UploadRepo, minio *mws.MinioServer) DownloadWorker {
+	return &RedisWorker{
 		repo:      repo,
 		minio:     minio,
 		stopCh:    make(chan struct{}),
@@ -31,17 +33,17 @@ func NewDownloadWorker(repo *repository.UploadRepo, minio *mws.MinioServer) *Dow
 	}
 }
 
-func (w *DownloadWorker) Start() {
+func (w *RedisWorker) Start() {
 	for i := 0; i < w.workerNum; i++ {
-		go w.run()
+		go w.Run()
 	}
 }
 
-func (w *DownloadWorker) Stop() {
+func (w *RedisWorker) Stop() {
 	close(w.stopCh)
 }
 
-func (w *DownloadWorker) run() {
+func (w *RedisWorker) Run() {
 	for {
 		select {
 		case <-w.stopCh:
@@ -58,24 +60,10 @@ func (w *DownloadWorker) run() {
 	}
 }
 
-func (w *DownloadWorker) processTask(taskId string) {
+func (w *RedisWorker) processTask(taskId string) {
 	ctx := context.Background()
-
-	// 获取任务信息
 	task, err := w.repo.GetDownloadTaskInfo(ctx, taskId)
 	if err != nil {
-		err := w.repo.UpdateTaskStatus(ctx, taskId, "failed", 0)
-		if err != nil {
-			fmt.Printf("update task status failed, taskId:%s", taskId)
-			return
-		}
-		return
-	}
-
-	// 更新任务状态为处理中
-	err = w.repo.UpdateTaskStatus(ctx, taskId, "processing", 0)
-	if err != nil {
-		fmt.Printf("update task status failed, taskId:%s", taskId)
 		return
 	}
 
@@ -84,14 +72,18 @@ func (w *DownloadWorker) processTask(taskId string) {
 	os.MkdirAll(tmpDir, 0755)
 	defer os.RemoveAll(tmpDir)
 
-	var totalSize int64
 	var wg sync.WaitGroup
 	for _, file := range task.Files {
 		wg.Add(1)
 		go func(file *cache.DownloadedFile) {
 			defer wg.Done()
 
-			// 下载文件
+			// 检查是否已下载
+			if file.Status == "completed" {
+				return
+			}
+
+			// 获取文件对象
 			obj, err := w.minio.GetObject(ctx, w.minio.BucketName, file.Name)
 			if err != nil {
 				file.Status = "failed"
@@ -99,41 +91,37 @@ func (w *DownloadWorker) processTask(taskId string) {
 			}
 			defer obj.Close()
 
-			// 保存到临时目录
+			// 创建本地文件
 			filePath := filepath.Join(tmpDir, file.Path)
 			os.MkdirAll(filepath.Dir(filePath), 0755)
 
-			f, err := os.Create(filePath)
+			f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 			if err != nil {
 				file.Status = "failed"
 				return
 			}
 			defer f.Close()
 
+			// 设置偏移量，支持断点续传
+			if file.Downloaded > 0 {
+				obj.Seek(file.Downloaded, io.SeekStart)
+				f.Seek(file.Downloaded, io.SeekStart)
+			}
+
+			// 拷贝数据并更新进度
 			written, err := io.Copy(f, obj)
 			if err != nil {
 				file.Status = "failed"
 				return
 			}
 
+			file.Downloaded += written
 			file.Status = "completed"
-			atomic.AddInt64(&totalSize, written)
 
-			// 更新进度
-			err = w.repo.UpdateTaskStatus(ctx, taskId, "processing", atomic.LoadInt64(&totalSize))
-			if err != nil {
-				fmt.Printf("update task status failed, taskId:%s", taskId)
-				return
-			}
+			// 更新任务进度
+			w.repo.UpdateTaskStatus(ctx, taskId, "processing", task.Progress+written)
 		}(file)
 	}
 
 	wg.Wait()
-
-	// 更新任务状态为完成
-	err = w.repo.UpdateTaskStatus(ctx, taskId, "completed", totalSize)
-	if err != nil {
-		fmt.Printf("update task status failed, taskId:%s", taskId)
-		return
-	}
 }

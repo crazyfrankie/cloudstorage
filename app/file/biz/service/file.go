@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/cache"
-	"github.com/google/uuid"
 	"io"
 	"log"
 	"os"
@@ -12,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
+	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/cache"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/file/mws"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
@@ -23,11 +23,11 @@ import (
 type FileServer struct {
 	repo   *repository.UploadRepo
 	minio  *mws.MinioServer
-	worker *DownloadWorker
+	worker DownloadWorker
 	file.UnimplementedFileServiceServer
 }
 
-func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker *DownloadWorker) *FileServer {
+func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker DownloadWorker) *FileServer {
 	return &FileServer{repo: repo, minio: minio, worker: worker}
 }
 
@@ -273,6 +273,106 @@ func (s *FileServer) DownloadTask(ctx context.Context, req *file.DownloadTaskReq
 	return &file.DownloadTaskResponse{
 		TaskId: taskId,
 	}, nil
+}
+
+// GetDownloadTask 获取下载任务状态
+func (s *FileServer) GetDownloadTask(ctx context.Context, req *file.GetDownloadTaskRequest) (*file.GetDownloadTaskResponse, error) {
+	// 从缓存获取任务信息
+	task, err := s.repo.GetDownloadTaskInfo(ctx, req.TaskId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查用户权限
+	if task.UserId != req.UserId {
+		return nil, errors.New("permission denied")
+	}
+
+	// 转换为响应格式
+	files := make([]*file.FileProgress, 0, len(task.Files))
+	for _, f := range task.Files {
+		files = append(files, &file.FileProgress{
+			FileId:     f.FileId,
+			Name:       f.Name,
+			Path:       f.Path,
+			Size:       f.Size,
+			Status:     f.Status,
+			Downloaded: f.Downloaded,
+		})
+	}
+
+	return &file.GetDownloadTaskResponse{
+		TaskId:     req.TaskId,
+		Status:     task.Status,
+		FolderName: task.FolderName,
+		TotalSize:  task.TotalSize,
+		Progress:   task.Progress,
+		Files:      files,
+	}, nil
+}
+
+// ResumeDownload 断点续传
+func (s *FileServer) ResumeDownload(ctx context.Context, req *file.ResumeDownloadRequest) (*file.ResumeDownloadResponse, error) {
+	// 获取原任务信息
+	task, err := s.repo.GetDownloadTaskInfo(ctx, req.TaskId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查用户权限
+	if task.UserId != req.UserId {
+		return nil, errors.New("permission denied")
+	}
+
+	// 筛选需要继续下载的文件
+	fileMap := make(map[int64]struct{})
+	for _, fid := range req.FileIds {
+		fileMap[fid] = struct{}{}
+	}
+
+	var remainingFiles []*cache.DownloadedFile
+	for _, f := range task.Files {
+		if _, ok := fileMap[f.FileId]; ok {
+			remainingFiles = append(remainingFiles, &cache.DownloadedFile{
+				FileId:     f.FileId,
+				Name:       f.Name,
+				Path:       f.Path,
+				Size:       f.Size,
+				Status:     "pending",
+				Downloaded: f.Downloaded, // 保留已下载进度
+			})
+		}
+	}
+
+	// 创建新的下载任务
+	newTaskId := uuid.New().String()
+	newTask := &cache.DownloadTask{
+		UserId:     req.UserId,
+		Status:     "pending",
+		FolderName: task.FolderName,
+		Files:      remainingFiles,
+		Progress:   0, // 新任务从0开始计算进度
+		TotalSize:  calculateTotalSize(remainingFiles),
+		CreatedAt:  time.Now(),
+	}
+
+	// 保存新任务
+	if err := s.repo.CreateDownloadTask(ctx, newTaskId, newTask); err != nil {
+		return nil, err
+	}
+
+	return &file.ResumeDownloadResponse{
+		NewTaskId: newTaskId,
+	}, nil
+}
+
+// calculateTotalSize 计算总大小
+func calculateTotalSize(files []*cache.DownloadedFile) int64 {
+	var total int64
+	for _, f := range files {
+		total += f.Size - f.Downloaded // 只计算未下载的部分
+	}
+	return total
 }
 
 func (s *FileServer) GetFile(ctx context.Context, req *file.GetFileRequest) (*file.GetFileResponse, error) {

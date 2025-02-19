@@ -29,11 +29,12 @@ type DownloadTask struct {
 }
 
 type DownloadedFile struct {
-	FileId int64  `json:"file_id"`
-	Name   string `json:"name"` // 添加文件名
-	Path   string `json:"path"`
-	Size   int64  `json:"size"`
-	Status string `json:"status"` // pending/processing/completed/failed
+	FileId     int64  `json:"file_id"`
+	Name       string `json:"name"` // 添加文件名
+	Path       string `json:"path"`
+	Size       int64  `json:"size"`
+	Status     string `json:"status"`      // pending/processing/completed/failed
+	Downloaded int64  `json:"down_loaded"` // 已经下载了多少
 }
 
 func NewFileCache(cmd redis.Cmdable) *FileCache {

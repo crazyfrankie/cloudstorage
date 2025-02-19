@@ -5,9 +5,11 @@ package ioc
 import (
 	"fmt"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
+	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/cache"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/service"
 	"github.com/crazyfrankie/cloudstorage/app/file/mws"
+	"github.com/redis/go-redis/v9"
 	"os"
 	"time"
 
@@ -43,6 +45,12 @@ func InitDB() *gorm.DB {
 	return db
 }
 
+func InitCache() redis.Cmdable {
+	return redis.NewClient(&redis.Options{
+		Addr: config.GetConf().Redis.Addr,
+	})
+}
+
 func InitMinio() *minio.Client {
 	client, err := minio.New(config.GetConf().Minio.EndPoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(config.GetConf().Minio.AccessKey, config.GetConf().Minio.SecretKey, ""),
@@ -72,9 +80,12 @@ func InitServer() *rpc.Server {
 		InitDB,
 		InitRegistry,
 		InitMinio,
+		InitCache,
 		dao.NewUploadDao,
+		cache.NewFileCache,
 		repository.NewUploadRepo,
 		mws.NewMinioServer,
+		service.NewRedisWorker,
 		service.NewFileServer,
 		rpc.NewServer,
 	)

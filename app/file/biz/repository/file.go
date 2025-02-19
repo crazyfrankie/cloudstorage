@@ -65,21 +65,17 @@ func (r *UploadRepo) ListFolder(ctx context.Context, folderId int64, userId int3
 }
 
 func (r *UploadRepo) GetNextDownloadTask(ctx context.Context) (string, error) {
-	// 直接调用 cache 层获取下一个待处理的任务
 	return r.cache.GetNextDownloadTask(ctx)
 }
 
 func (r *UploadRepo) GetDownloadTaskInfo(ctx context.Context, taskId string) (*cache.DownloadTask, error) {
-	// 调用 cache 层获取任务详细信息
 	return r.cache.GetDownloadTaskInfo(ctx, taskId)
 }
 
 func (r *UploadRepo) CreateDownloadTask(ctx context.Context, taskId string, info *cache.DownloadTask) error {
-	// 创建下载任务
 	return r.cache.CreateDownloadTask(ctx, taskId, info)
 }
 
 func (r *UploadRepo) UpdateTaskStatus(ctx context.Context, taskId string, status string, progress int64) error {
-	// 更新任务状态
 	return r.cache.UpdateTaskStatus(ctx, taskId, status, progress)
 }

@@ -36,6 +36,8 @@ const (
 	FileService_UploadPart_FullMethodName              = "/file.FileService/UploadPart"
 	FileService_CompleteMultipartUpload_FullMethodName = "/file.FileService/CompleteMultipartUpload"
 	FileService_DownloadTask_FullMethodName            = "/file.FileService/DownloadTask"
+	FileService_GetDownloadTask_FullMethodName         = "/file.FileService/GetDownloadTask"
+	FileService_ResumeDownload_FullMethodName          = "/file.FileService/ResumeDownload"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -58,7 +60,9 @@ type FileServiceClient interface {
 	InitMultipartUpload(ctx context.Context, in *InitMultipartUploadRequest, opts ...grpc.CallOption) (*InitMultipartUploadResponse, error)
 	UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error)
 	CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
-	DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadResponse, error)
+	DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadTaskResponse, error)
+	GetDownloadTask(ctx context.Context, in *GetDownloadTaskRequest, opts ...grpc.CallOption) (*GetDownloadTaskResponse, error)
+	ResumeDownload(ctx context.Context, in *ResumeDownloadRequest, opts ...grpc.CallOption) (*ResumeDownloadResponse, error)
 }
 
 type fileServiceClient struct {
@@ -238,10 +242,30 @@ func (c *fileServiceClient) CompleteMultipartUpload(ctx context.Context, in *Com
 	return out, nil
 }
 
-func (c *fileServiceClient) DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadResponse, error) {
+func (c *fileServiceClient) DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DownloadResponse)
+	out := new(DownloadTaskResponse)
 	err := c.cc.Invoke(ctx, FileService_DownloadTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) GetDownloadTask(ctx context.Context, in *GetDownloadTaskRequest, opts ...grpc.CallOption) (*GetDownloadTaskResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDownloadTaskResponse)
+	err := c.cc.Invoke(ctx, FileService_GetDownloadTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) ResumeDownload(ctx context.Context, in *ResumeDownloadRequest, opts ...grpc.CallOption) (*ResumeDownloadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResumeDownloadResponse)
+	err := c.cc.Invoke(ctx, FileService_ResumeDownload_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +292,9 @@ type FileServiceServer interface {
 	InitMultipartUpload(context.Context, *InitMultipartUploadRequest) (*InitMultipartUploadResponse, error)
 	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
 	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error)
-	DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadResponse, error)
+	DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadTaskResponse, error)
+	GetDownloadTask(context.Context, *GetDownloadTaskRequest) (*GetDownloadTaskResponse, error)
+	ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -327,8 +353,14 @@ func (UnimplementedFileServiceServer) UploadPart(context.Context, *UploadPartReq
 func (UnimplementedFileServiceServer) CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteMultipartUpload not implemented")
 }
-func (UnimplementedFileServiceServer) DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadResponse, error) {
+func (UnimplementedFileServiceServer) DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadTask not implemented")
+}
+func (UnimplementedFileServiceServer) GetDownloadTask(context.Context, *GetDownloadTaskRequest) (*GetDownloadTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDownloadTask not implemented")
+}
+func (UnimplementedFileServiceServer) ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResumeDownload not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -650,6 +682,42 @@ func _FileService_DownloadTask_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_GetDownloadTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDownloadTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).GetDownloadTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_GetDownloadTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).GetDownloadTask(ctx, req.(*GetDownloadTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_ResumeDownload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumeDownloadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).ResumeDownload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_ResumeDownload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).ResumeDownload(ctx, req.(*ResumeDownloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -720,6 +788,14 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DownloadTask",
 			Handler:    _FileService_DownloadTask_Handler,
+		},
+		{
+			MethodName: "GetDownloadTask",
+			Handler:    _FileService_GetDownloadTask_Handler,
+		},
+		{
+			MethodName: "ResumeDownload",
+			Handler:    _FileService_ResumeDownload_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

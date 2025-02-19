@@ -9,6 +9,7 @@ package ioc
 import (
 	"fmt"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository"
+	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/cache"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/file/biz/service"
 	"github.com/crazyfrankie/cloudstorage/app/file/config"
@@ -16,6 +17,7 @@ import (
 	"github.com/crazyfrankie/cloudstorage/app/file/rpc"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/redis/go-redis/v9"
 	"go.etcd.io/etcd/client/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -29,10 +31,13 @@ import (
 func InitServer() *rpc.Server {
 	db := InitDB()
 	uploadDao := dao.NewUploadDao(db)
-	uploadRepo := repository.NewUploadRepo(uploadDao)
+	cmdable := InitCache()
+	fileCache := cache.NewFileCache(cmdable)
+	uploadRepo := repository.NewUploadRepo(uploadDao, fileCache)
 	client := InitMinio()
 	minioServer := mws.NewMinioServer(client)
-	fileServer := service.NewFileServer(uploadRepo, minioServer)
+	downloadWorker := service.NewRedisWorker(uploadRepo, minioServer)
+	fileServer := service.NewFileServer(uploadRepo, minioServer, downloadWorker)
 	clientv3Client := InitRegistry()
 	server := rpc.NewServer(fileServer, clientv3Client)
 	return server
@@ -53,6 +58,12 @@ func InitDB() *gorm.DB {
 	db.AutoMigrate(&dao.File{}, &dao.FileStore{}, &dao.Folder{})
 
 	return db
+}
+
+func InitCache() redis.Cmdable {
+	return redis.NewClient(&redis.Options{
+		Addr: config.GetConf().Redis.Addr,
+	})
 }
 
 func InitMinio() *minio.Client {

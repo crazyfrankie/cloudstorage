@@ -349,9 +349,53 @@ func (h *FileHandler) BatchDownloadFiles() gin.HandlerFunc {
 			return
 		}
 
-		response.Success(c, gin.H{
-			"taskId": resp.TaskId,
+		response.Success(c, resp)
+	}
+}
+
+// GetDownloadTask 获取下载任务状态
+func (h *FileHandler) GetDownloadTask() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		taskId := c.Param("taskId")
+		claims := c.MustGet("claims").(*mws.Claim)
+
+		resp, err := h.cli.GetDownloadTask(c.Request.Context(), &file.GetDownloadTaskRequest{
+			TaskId: taskId,
+			UserId: claims.UserId,
 		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, resp)
+	}
+}
+
+// ResumeDownload 断点续传
+func (h *FileHandler) ResumeDownload() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			TaskId  string  `json:"taskId"`
+			FileIds []int64 `json:"fileIds"` // 需要继续下载的文件ID列表
+		}
+		if err := c.Bind(&req); err != nil {
+			return
+		}
+
+		claims := c.MustGet("claims").(*mws.Claim)
+
+		resp, err := h.cli.ResumeDownload(c.Request.Context(), &file.ResumeDownloadRequest{
+			TaskId:  req.TaskId,
+			UserId:  claims.UserId,
+			FileIds: req.FileIds,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, resp)
 	}
 }
 

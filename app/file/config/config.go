@@ -19,6 +19,7 @@ type Config struct {
 	Server Server `yaml:"server"`
 	MySQL  MySQL  `yaml:"mysql"`
 	Minio  Minio  `yaml:"minio"`
+	Redis  Redis  `yaml:"redis"`
 	ETCD   ETCD   `yaml:"etcd"`
 }
 
@@ -32,6 +33,10 @@ type MySQL struct {
 }
 
 type ETCD struct {
+	Addr string `yaml:"addr"`
+}
+
+type Redis struct {
 	Addr string `yaml:"addr"`
 }
 
