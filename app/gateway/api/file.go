@@ -209,8 +209,6 @@ func (h *FileHandler) Download() gin.HandlerFunc {
 		}
 
 		setHeader(c, fileName, mimeType)
-		// 显式设置 chunked transfer encoding
-		c.Header("Transfer-Encoding", "true")
 
 		// 使用 Stream 写入响应
 		c.Stream(func(w io.Writer) bool {

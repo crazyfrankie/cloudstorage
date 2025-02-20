@@ -32,6 +32,7 @@ func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker D
 	return &FileServer{repo: repo, minio: minio, worker: worker}
 }
 
+// Upload 处理小文件上传
 func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file.UploadResponse, error) {
 	meta, data := req.GetMetadata(), req.GetData()
 
@@ -199,6 +200,7 @@ func (s *FileServer) completeMultipartUpload(ctx context.Context, uploadId strin
 	return s.repo.CreateFile(ctx, file)
 }
 
+// Download 单个小文件下载
 func (s *FileServer) Download(ctx context.Context, req *file.DownloadRequest) (*file.DownloadResponse, error) {
 	// 获取文件信息
 	fileInfo, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
@@ -235,6 +237,7 @@ func (s *FileServer) Download(ctx context.Context, req *file.DownloadRequest) (*
 	}, nil
 }
 
+// DownloadStream 大文件流式下载
 func (s *FileServer) DownloadStream(req *file.DownloadRequest, stream file.FileService_DownloadStreamServer) error {
 	// 获取文件信息
 	fileInfo, err := s.repo.GetFile(stream.Context(), req.FileId, req.UserId)
@@ -401,6 +404,7 @@ func calculateTotalSize(files []*cache.DownloadedFile) int64 {
 	return total
 }
 
+// GetFile 获取文件信息
 func (s *FileServer) GetFile(ctx context.Context, req *file.GetFileRequest) (*file.GetFileResponse, error) {
 	fileInfo, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
 	if err != nil {
@@ -421,6 +425,7 @@ func (s *FileServer) GetFile(ctx context.Context, req *file.GetFileRequest) (*fi
 	}, nil
 }
 
+// CreateFileStore 创建资源空间
 func (s *FileServer) CreateFileStore(ctx context.Context, req *file.CreateFileStoreRequest) (*file.CreateFileStoreResponse, error) {
 	store := &dao.FileStore{
 		UserId: req.GetUserId(),
@@ -434,6 +439,7 @@ func (s *FileServer) CreateFileStore(ctx context.Context, req *file.CreateFileSt
 	return &file.CreateFileStoreResponse{Id: id}, nil
 }
 
+// CreateFolder 创建文件夹
 func (s *FileServer) CreateFolder(ctx context.Context, req *file.CreateFolderRequest) (*file.CreateFolderResponse, error) {
 	folder := &dao.Folder{
 		Name:     req.GetName(),
@@ -457,6 +463,7 @@ func (s *FileServer) CreateFolder(ctx context.Context, req *file.CreateFolderReq
 	}}, nil
 }
 
+// ListFolder 展示文件夹及文件
 func (s *FileServer) ListFolder(ctx context.Context, req *file.ListFolderRequest) (*file.ListFolderResponse, error) {
 	fs, fds, err := s.repo.ListFolder(ctx, req.GetFolderId(), req.GetUserId())
 	if err != nil {
@@ -496,6 +503,7 @@ func (s *FileServer) ListFolder(ctx context.Context, req *file.ListFolderRequest
 	}, nil
 }
 
+// MoveFile 移动文件
 func (s *FileServer) MoveFile(ctx context.Context, req *file.MoveFileRequest) (*file.MoveFileResponse, error) {
 	err := s.repo.MoveFile(ctx, req.GetFileId(), req.GetToFolderId(), req.GetUserId())
 	if err != nil {
@@ -505,6 +513,7 @@ func (s *FileServer) MoveFile(ctx context.Context, req *file.MoveFileRequest) (*
 	return &file.MoveFileResponse{}, nil
 }
 
+// MoveFolder 移动文件夹
 func (s *FileServer) MoveFolder(ctx context.Context, req *file.MoveFolderRequest) (*file.MoveFolderResponse, error) {
 	err := s.repo.MoveFolder(ctx, req.GetFolderId(), req.GetToFolderId(), req.GetUserId(), req.GetFolderName())
 	if err != nil {
@@ -514,6 +523,7 @@ func (s *FileServer) MoveFolder(ctx context.Context, req *file.MoveFolderRequest
 	return &file.MoveFolderResponse{}, nil
 }
 
+// DeleteFile 删除文件
 func (s *FileServer) DeleteFile(ctx context.Context, req *file.DeleteFileRequest) (*file.DeleteFileResponse, error) {
 	err := s.repo.DeleteFile(ctx, req.GetFileId(), req.GetUserId())
 	if err != nil {
@@ -523,6 +533,7 @@ func (s *FileServer) DeleteFile(ctx context.Context, req *file.DeleteFileRequest
 	return &file.DeleteFileResponse{}, nil
 }
 
+// DeleteFolder 删除文件夹
 func (s *FileServer) DeleteFolder(ctx context.Context, req *file.DeleteFolderRequest) (*file.DeleteFolderResponse, error) {
 	err := s.repo.DeleteFolder(ctx, req.GetFolderId(), req.GetUserId())
 	if err != nil {
@@ -532,6 +543,7 @@ func (s *FileServer) DeleteFolder(ctx context.Context, req *file.DeleteFolderReq
 	return &file.DeleteFolderResponse{}, nil
 }
 
+// Search 搜索文件和文件夹
 func (s *FileServer) Search(ctx context.Context, req *file.SearchRequest) (*file.SearchResponse, error) {
 	fs, fds, err := s.repo.Search(ctx, req.GetUserId(), req.GetQuery(), req.GetPage(), req.GetSize())
 	if err != nil {
@@ -568,6 +580,7 @@ func (s *FileServer) Search(ctx context.Context, req *file.SearchRequest) (*file
 	return &file.SearchResponse{Files: files, Folders: folders}, nil
 }
 
+// Preview 预览
 func (s *FileServer) Preview(ctx context.Context, req *file.PreviewRequest) (*file.PreviewResponse, error) {
 	// 获取文件信息
 	fileInfo, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
@@ -595,6 +608,7 @@ func (s *FileServer) Preview(ctx context.Context, req *file.PreviewRequest) (*fi
 	}, nil
 }
 
+// CreateShareLink 创建分享链接
 func (s *FileServer) CreateShareLink(ctx context.Context, req *file.CreateShareLinkRequest) (*file.CreateShareLinkResponse, error) {
 	shareId := uuid.New().String()
 	expireAt := time.Now().AddDate(0, 0, int(req.ExpireDays))
@@ -638,6 +652,7 @@ func (s *FileServer) CreateShareLink(ctx context.Context, req *file.CreateShareL
 	}, nil
 }
 
+// SaveToMyDrive 保存到个人网盘
 func (s *FileServer) SaveToMyDrive(ctx context.Context, req *file.SaveToMyDriveRequest) (*file.SaveToMyDriveResponse, error) {
 	// 验证分享是否有效
 	share, err := s.repo.GetShareLink(ctx, req.ShareId)
@@ -727,22 +742,32 @@ func (s *FileServer) saveFile(path string, data []byte) error {
 }
 
 func (s *FileServer) streamFile(r io.Reader, stream file.FileService_DownloadStreamServer) error {
-	buffer := make([]byte, 32*1024) // 32KB chunks
+	buffer := make([]byte, 5*1024*1024)
+	var totalSent int64
+
 	for {
 		n, err := r.Read(buffer)
+		if n > 0 {
+			// 只要读到数据就发送，即使遇到 EOF
+			if err := stream.Send(&file.DownloadStreamResponse{
+				Data: buffer[:n],
+			}); err != nil {
+				return fmt.Errorf("failed to send chunk: %v", err)
+			}
+			totalSent += int64(n)
+		}
+
 		if err == io.EOF {
+			// 确保所有数据都发送完毕
 			break
 		}
 		if err != nil {
-			return err
-		}
-
-		if err := stream.Send(&file.DownloadStreamResponse{
-			Data: buffer[:n],
-		}); err != nil {
-			return err
+			return fmt.Errorf("failed to read: %v", err)
 		}
 	}
+
+	// 日志记录实际发送的大小
+	log.Printf("Total bytes sent: %d", totalSent)
 	return nil
 }
 

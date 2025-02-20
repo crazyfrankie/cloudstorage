@@ -43,9 +43,9 @@ import (
 )
 
 const (
-	ChunkSize = 5 * 1024 * 1024 // 5MB
+	// ChunkSize   = 5 * 1024 * 1024 // 5MB buffer
 	UploadURL = "http://localhost:9091/api/files/upload/chunk"
-	Token     = "token" // 替换成实际的token
+	// Token     = "your-token"
 )
 
 func TestLargeFile(t *testing.T) {
@@ -94,7 +94,7 @@ func TestLargeFile(t *testing.T) {
 		writer.WriteField("uploadId", uploadId)
 		writer.WriteField("partNumber", strconv.FormatInt(i+1, 10))
 		writer.WriteField("fileSize", strconv.FormatInt(fileSize, 10))
-		writer.WriteField("folder", "0") // 根目录
+		writer.WriteField("folder", "1")
 		writer.WriteField("isLast", strconv.FormatBool(i == chunks-1))
 
 		writer.Close()
