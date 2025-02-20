@@ -42,6 +42,8 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 		fileGroup.POST("/folder/create", h.CreateFolder())
 		fileGroup.POST("/folder/list", h.ListFolder())
 		fileGroup.POST("/folder/move", h.MoveFolder())
+		fileGroup.POST("/share", h.CreateShareLink())
+		fileGroup.POST("/save", h.SaveToMyDrive())
 	}
 }
 
@@ -498,6 +500,7 @@ func (h *FileHandler) SearchFiles() gin.HandlerFunc {
 	}
 }
 
+// Preview 文件预览
 func (h *FileHandler) Preview() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -514,6 +517,66 @@ func (h *FileHandler) Preview() gin.HandlerFunc {
 		}
 
 		// 返回预览信息
+		response.Success(c, resp)
+	}
+}
+
+// CreateShareLink 创建分享链接
+func (h *FileHandler) CreateShareLink() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			FileIds    []int64 `json:"fileIds"`
+			FolderId   int64   `json:"folderId"`
+			ExpireDays int32   `json:"expireDays"`
+			Password   string  `json:"password"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return
+		}
+
+		claims := c.MustGet("claims").(*mws.Claim)
+		resp, err := h.cli.CreateShareLink(c.Request.Context(), &file.CreateShareLinkRequest{
+			UserId:     claims.UserId,
+			FileIds:    req.FileIds,
+			FolderId:   req.FolderId,
+			ExpireDays: req.ExpireDays,
+			Password:   req.Password,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, resp)
+	}
+}
+
+// SaveToMyDrive 保存到我的网盘
+func (h *FileHandler) SaveToMyDrive() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			ShareId    string  `json:"shareId"`
+			Password   string  `json:"password"`
+			ToFolderId int64   `json:"toFolderId"`
+			FileIds    []int64 `json:"fileIds"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return
+		}
+
+		claims := c.MustGet("claims").(*mws.Claim)
+		resp, err := h.cli.SaveToMyDrive(c.Request.Context(), &file.SaveToMyDriveRequest{
+			ShareId:    req.ShareId,
+			Password:   req.Password,
+			UserId:     claims.UserId,
+			ToFolderId: req.ToFolderId,
+			FileIds:    req.FileIds,
+		})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
 		response.Success(c, resp)
 	}
 }

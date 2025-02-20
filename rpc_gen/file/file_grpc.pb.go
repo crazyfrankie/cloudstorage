@@ -36,6 +36,8 @@ const (
 	FileService_GetDownloadTask_FullMethodName = "/file.FileService/GetDownloadTask"
 	FileService_ResumeDownload_FullMethodName  = "/file.FileService/ResumeDownload"
 	FileService_UploadChunk_FullMethodName     = "/file.FileService/UploadChunk"
+	FileService_CreateShareLink_FullMethodName = "/file.FileService/CreateShareLink"
+	FileService_SaveToMyDrive_FullMethodName   = "/file.FileService/SaveToMyDrive"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -59,6 +61,8 @@ type FileServiceClient interface {
 	GetDownloadTask(ctx context.Context, in *GetDownloadTaskRequest, opts ...grpc.CallOption) (*GetDownloadTaskResponse, error)
 	ResumeDownload(ctx context.Context, in *ResumeDownloadRequest, opts ...grpc.CallOption) (*ResumeDownloadResponse, error)
 	UploadChunk(ctx context.Context, in *UploadChunkRequest, opts ...grpc.CallOption) (*UploadChunkResponse, error)
+	CreateShareLink(ctx context.Context, in *CreateShareLinkRequest, opts ...grpc.CallOption) (*CreateShareLinkResponse, error)
+	SaveToMyDrive(ctx context.Context, in *SaveToMyDriveRequest, opts ...grpc.CallOption) (*SaveToMyDriveResponse, error)
 }
 
 type fileServiceClient struct {
@@ -248,6 +252,26 @@ func (c *fileServiceClient) UploadChunk(ctx context.Context, in *UploadChunkRequ
 	return out, nil
 }
 
+func (c *fileServiceClient) CreateShareLink(ctx context.Context, in *CreateShareLinkRequest, opts ...grpc.CallOption) (*CreateShareLinkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateShareLinkResponse)
+	err := c.cc.Invoke(ctx, FileService_CreateShareLink_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) SaveToMyDrive(ctx context.Context, in *SaveToMyDriveRequest, opts ...grpc.CallOption) (*SaveToMyDriveResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveToMyDriveResponse)
+	err := c.cc.Invoke(ctx, FileService_SaveToMyDrive_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileServiceServer is the server API for FileService service.
 // All implementations must embed UnimplementedFileServiceServer
 // for forward compatibility.
@@ -269,6 +293,8 @@ type FileServiceServer interface {
 	GetDownloadTask(context.Context, *GetDownloadTaskRequest) (*GetDownloadTaskResponse, error)
 	ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error)
 	UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error)
+	CreateShareLink(context.Context, *CreateShareLinkRequest) (*CreateShareLinkResponse, error)
+	SaveToMyDrive(context.Context, *SaveToMyDriveRequest) (*SaveToMyDriveResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -329,6 +355,12 @@ func (UnimplementedFileServiceServer) ResumeDownload(context.Context, *ResumeDow
 }
 func (UnimplementedFileServiceServer) UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadChunk not implemented")
+}
+func (UnimplementedFileServiceServer) CreateShareLink(context.Context, *CreateShareLinkRequest) (*CreateShareLinkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateShareLink not implemented")
+}
+func (UnimplementedFileServiceServer) SaveToMyDrive(context.Context, *SaveToMyDriveRequest) (*SaveToMyDriveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveToMyDrive not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -650,6 +682,42 @@ func _FileService_UploadChunk_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_CreateShareLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateShareLinkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).CreateShareLink(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_CreateShareLink_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).CreateShareLink(ctx, req.(*CreateShareLinkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_SaveToMyDrive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveToMyDriveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).SaveToMyDrive(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_SaveToMyDrive_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).SaveToMyDrive(ctx, req.(*SaveToMyDriveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -720,6 +788,14 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadChunk",
 			Handler:    _FileService_UploadChunk_Handler,
+		},
+		{
+			MethodName: "CreateShareLink",
+			Handler:    _FileService_CreateShareLink_Handler,
+		},
+		{
+			MethodName: "SaveToMyDrive",
+			Handler:    _FileService_SaveToMyDrive_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

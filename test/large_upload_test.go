@@ -27,7 +27,7 @@
 响应时间波动范围在 27ms-54ms 之间，相对稳定
 */
 
-package cloudstorage
+package test
 
 import (
 	"bytes"

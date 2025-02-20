@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -592,6 +593,124 @@ func (s *FileServer) Preview(ctx context.Context, req *file.PreviewRequest) (*fi
 		ContentType: s.getMimeType(fileInfo.Type),
 		Type:        previewType,
 	}, nil
+}
+
+func (s *FileServer) CreateShareLink(ctx context.Context, req *file.CreateShareLinkRequest) (*file.CreateShareLinkResponse, error) {
+	shareId := uuid.New().String()
+	expireAt := time.Now().AddDate(0, 0, int(req.ExpireDays))
+
+	// 创建分享记录
+	share := &dao.ShareLink{
+		Id:       shareId,
+		UserId:   req.UserId,
+		FolderId: req.FolderId,
+		Password: req.Password,
+		ExpireAt: expireAt,
+		Status:   1,
+	}
+
+	// 如果是分享文件，创建文件关联
+	if len(req.FileIds) > 0 {
+		for _, fileId := range req.FileIds {
+			shareFile := &dao.ShareFile{
+				ShareId: shareId,
+				FileId:  fileId,
+			}
+			if err := s.repo.CreateShareFile(ctx, shareFile); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// 保存分享记录
+	if err := s.repo.CreateShareLink(ctx, share); err != nil {
+		return nil, err
+	}
+
+	// 生成分享链接
+	shareUrl := fmt.Sprintf("%s/share/%s", "", shareId)
+
+	return &file.CreateShareLinkResponse{
+		ShareId:  shareId,
+		ShareUrl: shareUrl,
+		Password: req.Password,
+		ExpireAt: expireAt.Unix(),
+	}, nil
+}
+
+func (s *FileServer) SaveToMyDrive(ctx context.Context, req *file.SaveToMyDriveRequest) (*file.SaveToMyDriveResponse, error) {
+	// 验证分享是否有效
+	share, err := s.repo.GetShareLink(ctx, req.ShareId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查密码
+	if share.Password != "" && share.Password != req.Password {
+		return nil, errors.New("invalid password")
+	}
+
+	// 检查过期时间
+	if share.ExpireAt.Before(time.Now()) {
+		return nil, errors.New("share link expired")
+	}
+
+	// 获取要保存的文件列表
+	var files []*dao.File
+	var folders []*dao.Folder
+	if share.FolderId != 0 {
+		// 如果是文件夹分享，获取文件夹下的所有文件
+		files, folders, err = s.repo.ListFolder(ctx, req.GetToFolderId(), req.GetUserId())
+	} else {
+		// 如果是文件分享，获取选中的文件
+		files, err = s.repo.GetFilesByIds(ctx, req.FileIds)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查存储空间
+	var totalSize int64
+	for _, f := range files {
+		totalSize += f.Size
+	}
+	enough, err := s.repo.QueryCapacity(ctx, req.UserId, totalSize)
+	if err != nil || !enough {
+		return nil, errors.New("insufficient storage space")
+	}
+
+	// 复制文件到用户的网盘
+	for _, f := range files {
+		newFile := &dao.File{
+			UserId:   req.UserId,
+			Name:     f.Name,
+			Hash:     f.Hash,
+			Type:     f.Type,
+			Size:     f.Size,
+			FolderId: req.ToFolderId,
+			Path:     f.Path,
+			Status:   1,
+		}
+		if err := s.repo.CreateFile(ctx, newFile); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, fd := range folders {
+		newFolder := &dao.Folder{
+			Id:       fd.Id,
+			Name:     fd.Name,
+			ParentId: fd.ParentId,
+			UserId:   req.GetUserId(),
+			Path:     fd.Path,
+			Status:   0,
+		}
+		if err := s.repo.CreateFolder(ctx, newFolder); err != nil {
+			return nil, err
+		}
+	}
+
+	return &file.SaveToMyDriveResponse{}, nil
 }
 
 func (s *FileServer) saveFile(path string, data []byte) error {

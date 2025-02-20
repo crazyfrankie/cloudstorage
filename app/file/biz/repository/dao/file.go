@@ -23,6 +23,23 @@ type File struct {
 	Utime    int64
 }
 
+// ShareLink 分享链接表
+type ShareLink struct {
+	Id        string    `gorm:"primaryKey"`       // 分享ID
+	UserId    int32     `gorm:"index:idx_user"`   // 分享者ID
+	FolderId  int64     `gorm:"index:idx_folder"` // 分享的文件夹ID
+	Password  string    // 提取密码
+	CreatedAt time.Time // 创建时间
+	ExpireAt  time.Time `gorm:"index:idx_expire"` // 过期时间
+	Status    int8      `gorm:"index:idx_status"` // 状态：1-有效 2-已过期 3-已取消
+}
+
+// ShareFile 分享文件关联表
+type ShareFile struct {
+	ShareId string `gorm:"primaryKey"`
+	FileId  int64  `gorm:"primaryKey"`
+}
+
 type Folder struct {
 	Id       int64 `gorm:"primaryKey,autoIncrement"`
 	Name     string
@@ -324,4 +341,59 @@ func (d *UploadDao) ListFolder(ctx context.Context, folderId int64, userId int32
 	}
 
 	return files, folders, nil
+}
+
+// GetFilesByIds 批量获取文件信息
+func (d *UploadDao) GetFilesByIds(ctx context.Context, files []int64) ([]*File, error) {
+	var result []*File
+	err := d.db.WithContext(ctx).
+		Model(&File{}).
+		Where("id IN ?", files).
+		Find(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// CreateShareLink 创建分享链接记录
+func (d *UploadDao) CreateShareLink(ctx context.Context, share *ShareLink) error {
+	// 使用事务保证原子性
+	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 设置创建时间
+		share.CreatedAt = time.Now()
+
+		// 插入分享记录
+		if err := tx.Create(share).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+// CreateShareFile 创建分享文件关联
+func (d *UploadDao) CreateShareFile(ctx context.Context, share *ShareFile) error {
+	return d.db.WithContext(ctx).Create(share).Error
+}
+
+// GetShareLink 获取分享链接信息
+func (d *UploadDao) GetShareLink(ctx context.Context, shareId string) (ShareLink, error) {
+	var share ShareLink
+	err := d.db.WithContext(ctx).
+		Where("id = ? AND status = ? AND expire_at > ?",
+			shareId,
+			1,          // 状态为有效
+			time.Now(), // 未过期
+		).
+		First(&share).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ShareLink{}, errors.New("share link not found or expired")
+		}
+		return ShareLink{}, err
+	}
+
+	return share, nil
 }

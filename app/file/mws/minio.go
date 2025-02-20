@@ -29,6 +29,7 @@ func NewMinioServer(client *minio.Client) *MinioServer {
 	return server
 }
 
+// MakeBucket 创建 Bucket
 func (m *MinioServer) MakeBucket(ctx context.Context, name string) {
 	exists, err := m.client.BucketExists(ctx, name)
 	if err != nil {
@@ -44,21 +45,25 @@ func (m *MinioServer) MakeBucket(ctx context.Context, name string) {
 	}
 }
 
+// PutToBucket 放入对象
 func (m *MinioServer) PutToBucket(ctx context.Context, bucketName, filename string, filesize int64, data []byte) (minio.UploadInfo, error) {
 	info, err := m.client.PutObject(ctx, bucketName, filename, bytes.NewReader(data), filesize, minio.PutObjectOptions{})
 	return info, err
 }
 
+// GetObject 获取对象信息
 func (m *MinioServer) GetObject(ctx context.Context, bucketName, filename string) (*minio.Object, error) {
 	info, err := m.client.GetObject(ctx, bucketName, filename, minio.GetObjectOptions{})
 	return info, err
 }
 
+// PresignedGetObject 获取预览 URL
 func (m *MinioServer) PresignedGetObject(ctx context.Context, bucketName, filename string, expiration time.Duration) (*url.URL, error) {
 	reqParams := make(url.Values)
 	return m.client.PresignedGetObject(ctx, bucketName, filename, expiration, reqParams)
 }
 
+// CreateMultipartUpload 初始化分片上传
 func (m *MinioServer) CreateMultipartUpload(ctx context.Context, bucketName, filename string) (string, error) {
 	uploadID, err := m.core.NewMultipartUpload(ctx, bucketName, filename, minio.PutObjectOptions{})
 	if err != nil {

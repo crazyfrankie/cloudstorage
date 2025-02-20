@@ -233,6 +233,34 @@ message UploadChunkResponse {
   string etag = 2;         // 分片的ETag
 }
 
+message CreateShareLinkRequest {
+  int32 user_id = 1;          // 分享者ID
+  repeated int64 file_ids = 2; // 要分享的文件ID列表
+  int64 folder_id = 3;        // 要分享的文件夹ID，与file_ids二选一
+  int32 expire_days = 4;      // 链接有效期(天)
+  string password = 5;        // 可选的提取密码
+}
+
+message CreateShareLinkResponse {
+  string share_id = 1;        // 分享ID
+  string share_url = 2;       // 分享链接
+  string password = 3;        // 提取密码
+  int64 expire_at = 4;        // 过期时间
+}
+
+message SaveToMyDriveRequest {
+  string share_id = 1;        // 分享ID
+  string password = 2;        // 提取密码
+  int32 user_id = 3;         // 保存者的用户ID
+  int64 to_folder_id = 4;    // 保存到的目标文件夹ID
+  repeated int64 file_ids = 5;// 选择保存的文件ID列表
+}
+
+message SaveToMyDriveResponse {
+
+}
+
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -251,4 +279,6 @@ service FileService {
   rpc GetDownloadTask(GetDownloadTaskRequest) returns (GetDownloadTaskResponse);
   rpc ResumeDownload(ResumeDownloadRequest) returns (ResumeDownloadResponse);
   rpc UploadChunk(UploadChunkRequest) returns (UploadChunkResponse);
+  rpc CreateShareLink(CreateShareLinkRequest) returns (CreateShareLinkResponse);
+  rpc SaveToMyDrive(SaveToMyDriveRequest) returns (SaveToMyDriveResponse);
 }

@@ -105,3 +105,19 @@ func (r *UploadRepo) SavePartETag(ctx context.Context, uploadId string, part int
 func (r *UploadRepo) GetPartETags(ctx context.Context, uploadId string) (map[int]string, error) {
 	return r.cache.GetPartETags(ctx, uploadId)
 }
+
+func (r *UploadRepo) GetFilesByIds(ctx context.Context, files []int64) ([]*dao.File, error) {
+	return nil, nil
+}
+
+func (r *UploadRepo) CreateShareLink(ctx context.Context, share *dao.ShareLink) error {
+	return nil
+}
+
+func (r *UploadRepo) CreateShareFile(ctx context.Context, share *dao.ShareFile) error {
+	return nil
+}
+
+func (r *UploadRepo) GetShareLink(ctx context.Context, shareId string) (dao.ShareLink, error) {
+	return dao.ShareLink{}, nil
+}
