@@ -6,10 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 
@@ -32,7 +30,7 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 	fileGroup := r.Group("/api/files", mws.Auth())
 	{
 		fileGroup.POST("/upload", h.Upload())
-		fileGroup.POST("/large-upload", h.UploadLargeFile())
+		fileGroup.POST("/upload/chunk", h.UploadChunk())
 		fileGroup.GET("/download/:id", h.Download())
 		fileGroup.GET("/preview/:id", h.Preview())
 		fileGroup.POST("/download/task-queue", h.BatchDownloadFiles())
@@ -56,13 +54,6 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 			return
 		}
 		defer f.Close()
-
-		// 根据大小选择上传方式
-		if header.Size > consts.SmallFileSizeLimit {
-			// 重定向到大文件上传
-			h.UploadLargeFile()(c)
-			return
-		}
 
 		var hash string
 		hash, err = util.FileHash(f)
@@ -118,128 +109,47 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 	}
 }
 
-// UploadLargeFile 大文件上传也即大文件分块上传和断点续传
-func (h *FileHandler) UploadLargeFile() gin.HandlerFunc {
+// UploadChunk 处理文件分片上传
+func (h *FileHandler) UploadChunk() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		f, header, err := c.Request.FormFile("file")
+		// 获取分片文件
+		f, header, err := c.Request.FormFile("chunk")
 		if err != nil {
 			response.Error(c, err)
 			return
 		}
 		defer f.Close()
 
-		var hash string
-		hash, err = util.FileHash(f)
-		if err != nil {
-			response.Error(c, err)
-			return
-		}
+		// 从 header 获取文件名
+		filename := header.Filename
 
-		f.Seek(0, 0)
-		// 获取文件基本信息
-		name := header.Filename
-		path := consts.BasePath + name
-		size := header.Size
-		typ := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
+		// 其他参数仍需从 Form 获取
+		uploadId := c.PostForm("uploadId")
+		partNumber, _ := strconv.Atoi(c.PostForm("partNumber"))
+		fileSize, _ := strconv.ParseInt(c.PostForm("fileSize"), 10, 64)
+		folder := c.PostForm("folder")
+		folderId, _ := strconv.Atoi(folder)
+		isLast := c.PostForm("isLast") == "true"
+
 		claims := c.MustGet("claims").(*mws.Claim)
 
-		folder, ok := c.GetPostForm("folder")
-		if !ok {
-			response.Error(c, errors.New("doesn't contain parent id"))
-			return
-		}
-		folderId, _ := strconv.Atoi(folder)
-
-		// 初始化分块上传，获取uploadId
-		initResp, err := h.cli.InitMultipartUpload(c.Request.Context(), &file.InitMultipartUploadRequest{
-			Name:   name,
-			Size:   size,
-			UserId: claims.UserId,
-		})
+		// 读取分片数据
+		data, err := io.ReadAll(f)
 		if err != nil {
 			response.Error(c, err)
 			return
 		}
 
-		// 并发上传分块
-		const workerCount = 3
-		jobs := make(chan struct {
-			number int32
-			data   []byte
-		}, workerCount)
-		results := make(chan *file.PartInfo, workerCount)
-
-		// 启动工作协程
-		var wg sync.WaitGroup
-		for i := 0; i < workerCount; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for job := range jobs {
-					partResp, err := h.cli.UploadPart(c.Request.Context(), &file.UploadPartRequest{
-						UploadId:   initResp.UploadId,
-						ObjectName: name,
-						PartNumber: job.number,
-						Data:       job.data,
-					})
-					if err != nil {
-						// 处理错误
-						continue
-					}
-					results <- &file.PartInfo{
-						PartNumber: job.number,
-						Etag:       partResp.Etag,
-					}
-				}
-			}()
-		}
-
-		// 读取文件并分发任务
-		partNumber := int32(1)
-		for {
-			buffer := make([]byte, consts.ChunkSize)
-			n, err := f.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-
-			jobs <- struct {
-				number int32
-				data   []byte
-			}{
-				number: partNumber,
-				data:   buffer[:n],
-			}
-			partNumber++
-		}
-		close(jobs)
-
-		// 收集结果
-		go func() {
-			wg.Wait()
-			close(results)
-		}()
-
-		var parts []*file.PartInfo
-		for part := range results {
-			parts = append(parts, part)
-		}
-
-		// 按照 PartNumber 对 parts 排序
-		sort.Slice(parts, func(i, j int) bool {
-			return parts[i].PartNumber < parts[j].PartNumber
-		})
-
-		// 完成上传
-		resp, err := h.cli.CompleteMultipartUpload(c.Request.Context(), &file.CompleteMultipartUploadRequest{
-			UploadId:   initResp.UploadId,
-			Parts:      parts,
-			ObjectName: name,
+		// 上传分片
+		resp, err := h.cli.UploadChunk(c.Request.Context(), &file.UploadChunkRequest{
+			Filename:   filename,
+			UploadId:   uploadId,
+			PartNumber: int32(partNumber),
+			Data:       data,
+			FileSize:   fileSize,
 			UserId:     claims.UserId,
-			Hash:       hash,
-			Path:       path,
 			FolderId:   int64(folderId),
-			Typ:        typ,
+			IsLast:     isLast,
 		})
 		if err != nil {
 			response.Error(c, err)

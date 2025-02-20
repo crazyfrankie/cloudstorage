@@ -55,6 +55,7 @@ func InitMws() []gin.HandlerFunc {
 
 func InitGin(mws []gin.HandlerFunc, user *api.UserHandler, file *api.FileHandler) *gin.Engine {
 	server := gin.Default()
+	server.MaxMultipartMemory = 100 << 20
 	server.Use(mws...)
 
 	user.RegisterRoute(server)

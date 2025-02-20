@@ -162,38 +162,6 @@ enum PreviewType {
   TEXT = 4;
 }
 
-message InitMultipartUploadRequest {
-  int32 user_id = 1;
-  int64 size = 2;
-  string name = 3;
-}
-
-message InitMultipartUploadResponse {
-  string upload_id = 1;
-}
-
-message UploadPartRequest {
-  string upload_id = 1;
-  string object_name = 2;
-  int32 part_number = 3;
-  bytes data = 4;
-}
-
-message UploadPartResponse {
-  string etag = 1;
-}
-
-message CompleteMultipartUploadRequest {
-  string upload_id = 1;
-  repeated PartInfo parts = 2;
-  string object_name = 3;
-  int32 user_id = 4;
-  string hash = 5;
-  string path = 6;
-  int64 folder_id = 7;
-  string typ = 8;
-}
-
 message PartInfo {
   int32 part_number = 1;
   string etag = 2;
@@ -248,6 +216,23 @@ message ResumeDownloadResponse {
   string new_task_id = 1;  // 新的任务ID
 }
 
+message UploadChunkRequest {
+  string filename = 1;
+  string upload_id = 2;
+  int32 part_number = 3;
+  bytes data = 4;
+  int64 file_size = 5;
+  int32 user_id = 6;
+  int64 folder_id = 7;
+  bool is_last = 8;              // 是否是最后一个分片
+  repeated PartInfo parts = 9;   // 如果是最后一个分片，提供所有分片信息
+}
+
+message UploadChunkResponse {
+  string upload_id = 1;     // 如果是第一个分片，返回新的upload_id
+  string etag = 2;         // 分片的ETag
+}
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -262,10 +247,8 @@ service FileService {
   rpc DeleteFolder(DeleteFolderRequest) returns (DeleteFolderResponse);
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Preview(PreviewRequest) returns (PreviewResponse);
-  rpc InitMultipartUpload(InitMultipartUploadRequest) returns (InitMultipartUploadResponse);
-  rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
-  rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (UploadResponse);
   rpc DownloadTask(DownloadTaskRequest) returns (DownloadTaskResponse);
   rpc GetDownloadTask(GetDownloadTaskRequest) returns (GetDownloadTaskResponse);
   rpc ResumeDownload(ResumeDownloadRequest) returns (ResumeDownloadResponse);
+  rpc UploadChunk(UploadChunkRequest) returns (UploadChunkResponse);
 }

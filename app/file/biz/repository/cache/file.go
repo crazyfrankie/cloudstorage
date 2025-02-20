@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -104,4 +106,24 @@ func (c *FileCache) UpdateTaskStatus(ctx context.Context, taskId string, status 
 
 	taskData, _ := json.Marshal(info)
 	return c.cmd.HSet(ctx, taskKey, "info", taskData).Err()
+}
+
+func (c *FileCache) SavePartETag(ctx context.Context, uploadId string, partNumber int, etag string) error {
+	key := fmt.Sprintf("upload:parts:%s", uploadId)
+	return c.cmd.HSet(ctx, key, strconv.Itoa(partNumber), etag).Err()
+}
+
+func (c *FileCache) GetPartETags(ctx context.Context, uploadId string) (map[int]string, error) {
+	key := fmt.Sprintf("upload:parts:%s", uploadId)
+	result, err := c.cmd.HGetAll(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	etags := make(map[int]string)
+	for k, v := range result {
+		partNumber, _ := strconv.Atoi(k)
+		etags[partNumber] = v
+	}
+	return etags, nil
 }

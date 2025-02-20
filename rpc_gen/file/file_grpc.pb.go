@@ -19,25 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileService_Upload_FullMethodName                  = "/file.FileService/Upload"
-	FileService_CreateFileStore_FullMethodName         = "/file.FileService/CreateFileStore"
-	FileService_CreateFolder_FullMethodName            = "/file.FileService/CreateFolder"
-	FileService_ListFolder_FullMethodName              = "/file.FileService/ListFolder"
-	FileService_GetFile_FullMethodName                 = "/file.FileService/GetFile"
-	FileService_Download_FullMethodName                = "/file.FileService/Download"
-	FileService_DownloadStream_FullMethodName          = "/file.FileService/DownloadStream"
-	FileService_MoveFolder_FullMethodName              = "/file.FileService/MoveFolder"
-	FileService_MoveFile_FullMethodName                = "/file.FileService/MoveFile"
-	FileService_DeleteFile_FullMethodName              = "/file.FileService/DeleteFile"
-	FileService_DeleteFolder_FullMethodName            = "/file.FileService/DeleteFolder"
-	FileService_Search_FullMethodName                  = "/file.FileService/Search"
-	FileService_Preview_FullMethodName                 = "/file.FileService/Preview"
-	FileService_InitMultipartUpload_FullMethodName     = "/file.FileService/InitMultipartUpload"
-	FileService_UploadPart_FullMethodName              = "/file.FileService/UploadPart"
-	FileService_CompleteMultipartUpload_FullMethodName = "/file.FileService/CompleteMultipartUpload"
-	FileService_DownloadTask_FullMethodName            = "/file.FileService/DownloadTask"
-	FileService_GetDownloadTask_FullMethodName         = "/file.FileService/GetDownloadTask"
-	FileService_ResumeDownload_FullMethodName          = "/file.FileService/ResumeDownload"
+	FileService_Upload_FullMethodName          = "/file.FileService/Upload"
+	FileService_CreateFileStore_FullMethodName = "/file.FileService/CreateFileStore"
+	FileService_CreateFolder_FullMethodName    = "/file.FileService/CreateFolder"
+	FileService_ListFolder_FullMethodName      = "/file.FileService/ListFolder"
+	FileService_GetFile_FullMethodName         = "/file.FileService/GetFile"
+	FileService_Download_FullMethodName        = "/file.FileService/Download"
+	FileService_DownloadStream_FullMethodName  = "/file.FileService/DownloadStream"
+	FileService_MoveFolder_FullMethodName      = "/file.FileService/MoveFolder"
+	FileService_MoveFile_FullMethodName        = "/file.FileService/MoveFile"
+	FileService_DeleteFile_FullMethodName      = "/file.FileService/DeleteFile"
+	FileService_DeleteFolder_FullMethodName    = "/file.FileService/DeleteFolder"
+	FileService_Search_FullMethodName          = "/file.FileService/Search"
+	FileService_Preview_FullMethodName         = "/file.FileService/Preview"
+	FileService_DownloadTask_FullMethodName    = "/file.FileService/DownloadTask"
+	FileService_GetDownloadTask_FullMethodName = "/file.FileService/GetDownloadTask"
+	FileService_ResumeDownload_FullMethodName  = "/file.FileService/ResumeDownload"
+	FileService_UploadChunk_FullMethodName     = "/file.FileService/UploadChunk"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -57,12 +55,10 @@ type FileServiceClient interface {
 	DeleteFolder(ctx context.Context, in *DeleteFolderRequest, opts ...grpc.CallOption) (*DeleteFolderResponse, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error)
-	InitMultipartUpload(ctx context.Context, in *InitMultipartUploadRequest, opts ...grpc.CallOption) (*InitMultipartUploadResponse, error)
-	UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error)
-	CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
 	DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadTaskResponse, error)
 	GetDownloadTask(ctx context.Context, in *GetDownloadTaskRequest, opts ...grpc.CallOption) (*GetDownloadTaskResponse, error)
 	ResumeDownload(ctx context.Context, in *ResumeDownloadRequest, opts ...grpc.CallOption) (*ResumeDownloadResponse, error)
+	UploadChunk(ctx context.Context, in *UploadChunkRequest, opts ...grpc.CallOption) (*UploadChunkResponse, error)
 }
 
 type fileServiceClient struct {
@@ -212,36 +208,6 @@ func (c *fileServiceClient) Preview(ctx context.Context, in *PreviewRequest, opt
 	return out, nil
 }
 
-func (c *fileServiceClient) InitMultipartUpload(ctx context.Context, in *InitMultipartUploadRequest, opts ...grpc.CallOption) (*InitMultipartUploadResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InitMultipartUploadResponse)
-	err := c.cc.Invoke(ctx, FileService_InitMultipartUpload_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *fileServiceClient) UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UploadPartResponse)
-	err := c.cc.Invoke(ctx, FileService_UploadPart_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *fileServiceClient) CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*UploadResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UploadResponse)
-	err := c.cc.Invoke(ctx, FileService_CompleteMultipartUpload_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *fileServiceClient) DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DownloadTaskResponse)
@@ -272,6 +238,16 @@ func (c *fileServiceClient) ResumeDownload(ctx context.Context, in *ResumeDownlo
 	return out, nil
 }
 
+func (c *fileServiceClient) UploadChunk(ctx context.Context, in *UploadChunkRequest, opts ...grpc.CallOption) (*UploadChunkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadChunkResponse)
+	err := c.cc.Invoke(ctx, FileService_UploadChunk_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileServiceServer is the server API for FileService service.
 // All implementations must embed UnimplementedFileServiceServer
 // for forward compatibility.
@@ -289,12 +265,10 @@ type FileServiceServer interface {
 	DeleteFolder(context.Context, *DeleteFolderRequest) (*DeleteFolderResponse, error)
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	Preview(context.Context, *PreviewRequest) (*PreviewResponse, error)
-	InitMultipartUpload(context.Context, *InitMultipartUploadRequest) (*InitMultipartUploadResponse, error)
-	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
-	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error)
 	DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadTaskResponse, error)
 	GetDownloadTask(context.Context, *GetDownloadTaskRequest) (*GetDownloadTaskResponse, error)
 	ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error)
+	UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -344,15 +318,6 @@ func (UnimplementedFileServiceServer) Search(context.Context, *SearchRequest) (*
 func (UnimplementedFileServiceServer) Preview(context.Context, *PreviewRequest) (*PreviewResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Preview not implemented")
 }
-func (UnimplementedFileServiceServer) InitMultipartUpload(context.Context, *InitMultipartUploadRequest) (*InitMultipartUploadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InitMultipartUpload not implemented")
-}
-func (UnimplementedFileServiceServer) UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadPart not implemented")
-}
-func (UnimplementedFileServiceServer) CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*UploadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CompleteMultipartUpload not implemented")
-}
 func (UnimplementedFileServiceServer) DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadTask not implemented")
 }
@@ -361,6 +326,9 @@ func (UnimplementedFileServiceServer) GetDownloadTask(context.Context, *GetDownl
 }
 func (UnimplementedFileServiceServer) ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeDownload not implemented")
+}
+func (UnimplementedFileServiceServer) UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadChunk not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -610,60 +578,6 @@ func _FileService_Preview_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FileService_InitMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitMultipartUploadRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FileServiceServer).InitMultipartUpload(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FileService_InitMultipartUpload_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServiceServer).InitMultipartUpload(ctx, req.(*InitMultipartUploadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _FileService_UploadPart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UploadPartRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FileServiceServer).UploadPart(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FileService_UploadPart_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServiceServer).UploadPart(ctx, req.(*UploadPartRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _FileService_CompleteMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CompleteMultipartUploadRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FileServiceServer).CompleteMultipartUpload(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FileService_CompleteMultipartUpload_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServiceServer).CompleteMultipartUpload(ctx, req.(*CompleteMultipartUploadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _FileService_DownloadTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DownloadTaskRequest)
 	if err := dec(in); err != nil {
@@ -714,6 +628,24 @@ func _FileService_ResumeDownload_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FileServiceServer).ResumeDownload(ctx, req.(*ResumeDownloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_UploadChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadChunkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).UploadChunk(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_UploadChunk_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).UploadChunk(ctx, req.(*UploadChunkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -774,18 +706,6 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FileService_Preview_Handler,
 		},
 		{
-			MethodName: "InitMultipartUpload",
-			Handler:    _FileService_InitMultipartUpload_Handler,
-		},
-		{
-			MethodName: "UploadPart",
-			Handler:    _FileService_UploadPart_Handler,
-		},
-		{
-			MethodName: "CompleteMultipartUpload",
-			Handler:    _FileService_CompleteMultipartUpload_Handler,
-		},
-		{
 			MethodName: "DownloadTask",
 			Handler:    _FileService_DownloadTask_Handler,
 		},
@@ -796,6 +716,10 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumeDownload",
 			Handler:    _FileService_ResumeDownload_Handler,
+		},
+		{
+			MethodName: "UploadChunk",
+			Handler:    _FileService_UploadChunk_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
