@@ -7,7 +7,7 @@
 package user
 
 import (
-	file "/file"
+	file "github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

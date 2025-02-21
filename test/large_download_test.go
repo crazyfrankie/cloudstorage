@@ -15,8 +15,8 @@ import (
 
 const (
 	DownloadURL = "http://localhost:9091/api/files/download/1"
-	Token       = "your-token"
-	ChunkSize   = 5 * 1024 * 1024 // 5MB buffer
+	//Token       = "your-token"
+	ChunkSize = 5 * 1024 * 1024 // 5MB
 )
 
 func TestDownloadLargeFile(t *testing.T) {

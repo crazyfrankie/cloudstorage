@@ -19,26 +19,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileService_Upload_FullMethodName           = "/file.FileService/Upload"
-	FileService_CreateFileStore_FullMethodName  = "/file.FileService/CreateFileStore"
-	FileService_CreateFolder_FullMethodName     = "/file.FileService/CreateFolder"
-	FileService_ListFolder_FullMethodName       = "/file.FileService/ListFolder"
-	FileService_GetFile_FullMethodName          = "/file.FileService/GetFile"
-	FileService_Download_FullMethodName         = "/file.FileService/Download"
-	FileService_DownloadStream_FullMethodName   = "/file.FileService/DownloadStream"
-	FileService_MoveFolder_FullMethodName       = "/file.FileService/MoveFolder"
-	FileService_MoveFile_FullMethodName         = "/file.FileService/MoveFile"
-	FileService_DeleteFile_FullMethodName       = "/file.FileService/DeleteFile"
-	FileService_DeleteFolder_FullMethodName     = "/file.FileService/DeleteFolder"
-	FileService_Search_FullMethodName           = "/file.FileService/Search"
-	FileService_Preview_FullMethodName          = "/file.FileService/Preview"
-	FileService_DownloadTask_FullMethodName     = "/file.FileService/DownloadTask"
-	FileService_GetDownloadTask_FullMethodName  = "/file.FileService/GetDownloadTask"
-	FileService_ResumeDownload_FullMethodName   = "/file.FileService/ResumeDownload"
-	FileService_UploadChunk_FullMethodName      = "/file.FileService/UploadChunk"
-	FileService_CreateShareLink_FullMethodName  = "/file.FileService/CreateShareLink"
-	FileService_SaveToMyDrive_FullMethodName    = "/file.FileService/SaveToMyDrive"
-	FileService_GetUserFileStore_FullMethodName = "/file.FileService/GetUserFileStore"
+	FileService_Upload_FullMethodName            = "/file.FileService/Upload"
+	FileService_CreateFileStore_FullMethodName   = "/file.FileService/CreateFileStore"
+	FileService_CreateFolder_FullMethodName      = "/file.FileService/CreateFolder"
+	FileService_ListFolder_FullMethodName        = "/file.FileService/ListFolder"
+	FileService_GetFile_FullMethodName           = "/file.FileService/GetFile"
+	FileService_Download_FullMethodName          = "/file.FileService/Download"
+	FileService_DownloadStream_FullMethodName    = "/file.FileService/DownloadStream"
+	FileService_MoveFolder_FullMethodName        = "/file.FileService/MoveFolder"
+	FileService_MoveFile_FullMethodName          = "/file.FileService/MoveFile"
+	FileService_DeleteFile_FullMethodName        = "/file.FileService/DeleteFile"
+	FileService_DeleteFolder_FullMethodName      = "/file.FileService/DeleteFolder"
+	FileService_Search_FullMethodName            = "/file.FileService/Search"
+	FileService_Preview_FullMethodName           = "/file.FileService/Preview"
+	FileService_DownloadTask_FullMethodName      = "/file.FileService/DownloadTask"
+	FileService_GetDownloadTask_FullMethodName   = "/file.FileService/GetDownloadTask"
+	FileService_ResumeDownload_FullMethodName    = "/file.FileService/ResumeDownload"
+	FileService_UploadChunkStream_FullMethodName = "/file.FileService/UploadChunkStream"
+	FileService_CreateShareLink_FullMethodName   = "/file.FileService/CreateShareLink"
+	FileService_SaveToMyDrive_FullMethodName     = "/file.FileService/SaveToMyDrive"
+	FileService_GetUserFileStore_FullMethodName  = "/file.FileService/GetUserFileStore"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -61,7 +61,7 @@ type FileServiceClient interface {
 	DownloadTask(ctx context.Context, in *DownloadTaskRequest, opts ...grpc.CallOption) (*DownloadTaskResponse, error)
 	GetDownloadTask(ctx context.Context, in *GetDownloadTaskRequest, opts ...grpc.CallOption) (*GetDownloadTaskResponse, error)
 	ResumeDownload(ctx context.Context, in *ResumeDownloadRequest, opts ...grpc.CallOption) (*ResumeDownloadResponse, error)
-	UploadChunk(ctx context.Context, in *UploadChunkRequest, opts ...grpc.CallOption) (*UploadChunkResponse, error)
+	UploadChunkStream(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadChunkRequest, UploadChunkResponse], error)
 	CreateShareLink(ctx context.Context, in *CreateShareLinkRequest, opts ...grpc.CallOption) (*CreateShareLinkResponse, error)
 	SaveToMyDrive(ctx context.Context, in *SaveToMyDriveRequest, opts ...grpc.CallOption) (*SaveToMyDriveResponse, error)
 	GetUserFileStore(ctx context.Context, in *GetUserFileStoreRequest, opts ...grpc.CallOption) (*GetUserFileStoreResponse, error)
@@ -244,15 +244,18 @@ func (c *fileServiceClient) ResumeDownload(ctx context.Context, in *ResumeDownlo
 	return out, nil
 }
 
-func (c *fileServiceClient) UploadChunk(ctx context.Context, in *UploadChunkRequest, opts ...grpc.CallOption) (*UploadChunkResponse, error) {
+func (c *fileServiceClient) UploadChunkStream(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadChunkRequest, UploadChunkResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UploadChunkResponse)
-	err := c.cc.Invoke(ctx, FileService_UploadChunk_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &FileService_ServiceDesc.Streams[1], FileService_UploadChunkStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[UploadChunkRequest, UploadChunkResponse]{ClientStream: stream}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileService_UploadChunkStreamClient = grpc.ClientStreamingClient[UploadChunkRequest, UploadChunkResponse]
 
 func (c *fileServiceClient) CreateShareLink(ctx context.Context, in *CreateShareLinkRequest, opts ...grpc.CallOption) (*CreateShareLinkResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -304,7 +307,7 @@ type FileServiceServer interface {
 	DownloadTask(context.Context, *DownloadTaskRequest) (*DownloadTaskResponse, error)
 	GetDownloadTask(context.Context, *GetDownloadTaskRequest) (*GetDownloadTaskResponse, error)
 	ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error)
-	UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error)
+	UploadChunkStream(grpc.ClientStreamingServer[UploadChunkRequest, UploadChunkResponse]) error
 	CreateShareLink(context.Context, *CreateShareLinkRequest) (*CreateShareLinkResponse, error)
 	SaveToMyDrive(context.Context, *SaveToMyDriveRequest) (*SaveToMyDriveResponse, error)
 	GetUserFileStore(context.Context, *GetUserFileStoreRequest) (*GetUserFileStoreResponse, error)
@@ -366,8 +369,8 @@ func (UnimplementedFileServiceServer) GetDownloadTask(context.Context, *GetDownl
 func (UnimplementedFileServiceServer) ResumeDownload(context.Context, *ResumeDownloadRequest) (*ResumeDownloadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeDownload not implemented")
 }
-func (UnimplementedFileServiceServer) UploadChunk(context.Context, *UploadChunkRequest) (*UploadChunkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadChunk not implemented")
+func (UnimplementedFileServiceServer) UploadChunkStream(grpc.ClientStreamingServer[UploadChunkRequest, UploadChunkResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method UploadChunkStream not implemented")
 }
 func (UnimplementedFileServiceServer) CreateShareLink(context.Context, *CreateShareLinkRequest) (*CreateShareLinkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateShareLink not implemented")
@@ -680,23 +683,12 @@ func _FileService_ResumeDownload_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FileService_UploadChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UploadChunkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FileServiceServer).UploadChunk(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FileService_UploadChunk_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServiceServer).UploadChunk(ctx, req.(*UploadChunkRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _FileService_UploadChunkStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileServiceServer).UploadChunkStream(&grpc.GenericServerStream[UploadChunkRequest, UploadChunkResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileService_UploadChunkStreamServer = grpc.ClientStreamingServer[UploadChunkRequest, UploadChunkResponse]
 
 func _FileService_CreateShareLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateShareLinkRequest)
@@ -820,10 +812,6 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FileService_ResumeDownload_Handler,
 		},
 		{
-			MethodName: "UploadChunk",
-			Handler:    _FileService_UploadChunk_Handler,
-		},
-		{
 			MethodName: "CreateShareLink",
 			Handler:    _FileService_CreateShareLink_Handler,
 		},
@@ -841,6 +829,11 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "DownloadStream",
 			Handler:       _FileService_DownloadStream_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "UploadChunkStream",
+			Handler:       _FileService_UploadChunkStream_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "idl/cloudstorage/file.proto",

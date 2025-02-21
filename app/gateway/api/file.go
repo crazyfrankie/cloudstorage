@@ -111,50 +111,111 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 	}
 }
 
-// UploadChunk 处理文件分片上传
+// UploadChunk v1 处理文件分片上传
+//func (h *FileHandler) UploadChunk() gin.HandlerFunc {
+//	return func(c *gin.Context) {
+//		// 获取分片文件
+//		f, header, err := c.Request.FormFile("chunk")
+//		if err != nil {
+//			response.Error(c, err)
+//			return
+//		}
+//		defer f.Close()
+//
+//		// 从 header 获取文件名
+//		filename := header.Filename
+//
+//		// 其他参数仍需从 Form 获取
+//		uploadId := c.PostForm("uploadId")
+//		partNumber, _ := strconv.Atoi(c.PostForm("partNumber"))
+//		fileSize, _ := strconv.ParseInt(c.PostForm("fileSize"), 10, 64)
+//		folder := c.PostForm("folder")
+//		folderId, _ := strconv.Atoi(folder)
+//		isLast := c.PostForm("isLast") == "true"
+//
+//		claims := c.MustGet("claims").(*mws.Claim)
+//
+//		// 读取分片数据
+//		data, err := io.ReadAll(f)
+//		if err != nil {
+//			response.Error(c, err)
+//			return
+//		}
+//
+//		// 上传分片
+//		resp, err := h.cli.UploadChunk(c.Request.Context(), &file.UploadChunkRequest{
+//			Filename:   filename,
+//			UploadId:   uploadId,
+//			PartNumber: int32(partNumber),
+//			Data:       data,
+//			FileSize:   fileSize,
+//			UserId:     claims.UserId,
+//			FolderId:   int64(folderId),
+//			IsLast:     isLast,
+//		})
+//		if err != nil {
+//			response.Error(c, err)
+//			return
+//		}
+//
+//		response.Success(c, resp)
+//	}
+//}
+
+// UploadChunk v2
 func (h *FileHandler) UploadChunk() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 获取分片文件
-		f, header, err := c.Request.FormFile("chunk")
+		f, header, err := c.Request.FormFile("file")
 		if err != nil {
 			response.Error(c, err)
 			return
 		}
 		defer f.Close()
 
-		// 从 header 获取文件名
-		filename := header.Filename
-
-		// 其他参数仍需从 Form 获取
-		uploadId := c.PostForm("uploadId")
-		partNumber, _ := strconv.Atoi(c.PostForm("partNumber"))
-		fileSize, _ := strconv.ParseInt(c.PostForm("fileSize"), 10, 64)
+		// 获取其他参数
 		folder := c.PostForm("folder")
 		folderId, _ := strconv.Atoi(folder)
-		isLast := c.PostForm("isLast") == "true"
-
 		claims := c.MustGet("claims").(*mws.Claim)
 
-		// 读取分片数据
-		data, err := io.ReadAll(f)
+		stream, err := h.cli.UploadChunkStream(c.Request.Context())
 		if err != nil {
 			response.Error(c, err)
 			return
 		}
 
-		// 上传分片
-		resp, err := h.cli.UploadChunk(c.Request.Context(), &file.UploadChunkRequest{
-			Filename:   filename,
-			UploadId:   uploadId,
-			PartNumber: int32(partNumber),
-			Data:       data,
-			FileSize:   fileSize,
-			UserId:     claims.UserId,
-			FolderId:   int64(folderId),
-			IsLast:     isLast,
-		})
+		buffer := make([]byte, consts.ChunkSize)
+		var partNumber int32 = 0
+
+		for {
+			n, err := f.Read(buffer)
+			if n > 0 {
+				partNumber++
+				if err := stream.Send(&file.UploadChunkRequest{
+					Filename:   header.Filename,
+					PartNumber: partNumber,
+					Data:       buffer[:n],
+					FileSize:   header.Size,
+					UserId:     claims.UserId,
+					FolderId:   int64(folderId),
+				}); err != nil {
+					response.Error(c, fmt.Errorf("failed to send chunk: %v", err))
+					return
+				}
+			}
+
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				response.Error(c, fmt.Errorf("failed to read file: %v", err))
+				return
+			}
+		}
+
+		// 完成上传并获取响应
+		resp, err := stream.CloseAndRecv()
 		if err != nil {
-			response.Error(c, err)
+			response.Error(c, fmt.Errorf("failed to close stream: %v", err))
 			return
 		}
 

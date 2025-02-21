@@ -91,7 +91,74 @@ func (s *FileServer) Upload(ctx context.Context, req *file.UploadRequest) (*file
 	}, nil
 }
 
-// UploadChunk 处理分片上传
+// UploadChunkStream v2 分片上传, 处理流式分片上传
+func (s *FileServer) UploadChunkStream(stream file.FileService_UploadChunkStreamServer) error {
+	var uploadId string
+	var filename string
+	var partNumber int32 = 0
+	var userId int32
+	var folderId int64
+	parts := make([]minio.CompletePart, 0)
+
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			// 完成上传
+			if err := s.completeMultipartUpload(stream.Context(), uploadId, filename, parts, &dao.File{
+				Name:     filename,
+				UserId:   userId,
+				Type:     filepath.Ext(filename)[1:],
+				Path:     filename,
+				FolderId: folderId,
+			}); err != nil {
+				return err
+			}
+			return stream.SendAndClose(&file.UploadChunkResponse{
+				UploadId: uploadId,
+			})
+		}
+		if err != nil {
+			return err
+		}
+
+		// 初始化上传或获取之前保存的信息
+		if partNumber == 0 {
+			filename = chunk.Filename
+			userId = chunk.UserId
+			folderId = chunk.FolderId
+
+			// 检查存储空间
+			enough, err := s.repo.QueryCapacity(stream.Context(), userId, chunk.FileSize)
+			if err != nil {
+				return err
+			}
+			if !enough {
+				return errors.New("insufficient storage space")
+			}
+
+			// 初始化分片上传
+			uploadId, err = s.initMultipartUpload(stream.Context(), filename)
+			if err != nil {
+				return err
+			}
+		}
+
+		// 上传分片
+		partNumber++
+		etag, err := s.uploadPart(stream.Context(), uploadId, filename, partNumber, chunk.Data)
+		if err != nil {
+			return err
+		}
+
+		// 保存分片信息
+		parts = append(parts, minio.CompletePart{
+			PartNumber: int(partNumber),
+			ETag:       etag,
+		})
+	}
+}
+
+// UploadChunk v1 处理分片上传
 func (s *FileServer) UploadChunk(ctx context.Context, req *file.UploadChunkRequest) (*file.UploadChunkResponse, error) {
 	// 第一个分片需要初始化
 	if req.PartNumber == 1 && req.UploadId == "" {
@@ -748,7 +815,6 @@ func (s *FileServer) streamFile(r io.Reader, stream file.FileService_DownloadStr
 	for {
 		n, err := r.Read(buffer)
 		if n > 0 {
-			// 只要读到数据就发送，即使遇到 EOF
 			if err := stream.Send(&file.DownloadStreamResponse{
 				Data: buffer[:n],
 			}); err != nil {
@@ -766,7 +832,6 @@ func (s *FileServer) streamFile(r io.Reader, stream file.FileService_DownloadStr
 		}
 	}
 
-	// 日志记录实际发送的大小
 	log.Printf("Total bytes sent: %d", totalSent)
 	return nil
 }

@@ -291,7 +291,7 @@ service FileService {
   rpc DownloadTask(DownloadTaskRequest) returns (DownloadTaskResponse);
   rpc GetDownloadTask(GetDownloadTaskRequest) returns (GetDownloadTaskResponse);
   rpc ResumeDownload(ResumeDownloadRequest) returns (ResumeDownloadResponse);
-  rpc UploadChunk(UploadChunkRequest) returns (UploadChunkResponse);
+  rpc UploadChunkStream(stream UploadChunkRequest) returns (UploadChunkResponse) {}
   rpc CreateShareLink(CreateShareLinkRequest) returns (CreateShareLinkResponse);
   rpc SaveToMyDrive(SaveToMyDriveRequest) returns (SaveToMyDriveResponse);
   rpc GetUserFileStore(GetUserFileStoreRequest) returns (GetUserFileStoreResponse);
