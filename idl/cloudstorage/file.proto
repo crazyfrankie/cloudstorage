@@ -33,6 +33,12 @@ message Folder {
   string utime = 6;
 }
 
+message FileStore {
+    int32 user_id = 1;
+    int64 capacity = 2;
+    int64 current_size = 3;
+}
+
 message UploadRequest {
   FileMetaData metadata = 1;
   bytes data = 2;
@@ -260,6 +266,13 @@ message SaveToMyDriveResponse {
 
 }
 
+message GetUserFileStoreRequest {
+  int32 user_id = 1;
+}
+
+message GetUserFileStoreResponse {
+  FileStore file_store = 1;
+}
 
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
@@ -281,4 +294,5 @@ service FileService {
   rpc UploadChunk(UploadChunkRequest) returns (UploadChunkResponse);
   rpc CreateShareLink(CreateShareLinkRequest) returns (CreateShareLinkResponse);
   rpc SaveToMyDrive(SaveToMyDriveRequest) returns (SaveToMyDriveResponse);
+  rpc GetUserFileStore(GetUserFileStoreRequest) returns (GetUserFileStoreResponse);
 }

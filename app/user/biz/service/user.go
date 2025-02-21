@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
-	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
+	"log"
+	"sync"
 
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/user/mws"
+	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/sm"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
 )
@@ -86,4 +88,51 @@ func (s *UserServer) VerifyCode(ctx context.Context, req *user.VerifyCodeRequest
 	}
 
 	return &user.VerifyCodeResponse{Token: token}, nil
+}
+
+func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoRequest) (*user.GetUserInfoResponse, error) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	var err error
+	var u dao.User
+	var resp *file.GetUserFileStoreResponse
+	go func() {
+		u, err = s.repo.FindById(ctx, int(req.GetUserId()))
+		if err != nil {
+			log.Printf("failed get user info, %s", err)
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		resp, err = s.file.GetUserFileStore(ctx, &file.GetUserFileStoreRequest{UserId: req.GetUserId()})
+		if err != nil {
+			log.Printf("failed get user file store, %s", err)
+		}
+		wg.Done()
+	}()
+
+	return &user.GetUserInfoResponse{
+		User: &user.User{
+			Id:     int32(u.Id),
+			Name:   u.Name,
+			Phone:  u.Phone,
+			Avatar: u.Avatar,
+		},
+		FileStore: resp.GetFileStore(),
+	}, nil
+}
+
+func (s *UserServer) UpdateInfo(ctx context.Context, req *user.UpdateInfoRequest) (*user.UpdateInfoResponse, error) {
+	err := s.repo.UpdateInfo(ctx, &dao.User{
+		Id:     int(req.GetUserId()),
+		Name:   req.GetName(),
+		Avatar: req.GetAvatar(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.UpdateInfoResponse{}, nil
 }

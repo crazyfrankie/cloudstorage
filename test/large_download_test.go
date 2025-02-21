@@ -1,4 +1,3 @@
-// 在 [test/large_download_test.go](test/large_download_test.go) 中：
 package test
 
 import (

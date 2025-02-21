@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/crazyfrankie/cloudstorage/app/gateway/common/response"
@@ -36,7 +34,7 @@ func (h *UserHandler) SendCode() gin.HandlerFunc {
 		if err := c.Bind(&req); err != nil {
 			return
 		}
-		fmt.Println(req)
+
 		resp, err := h.cli.SendCode(c.Request.Context(), &user.SendCodeRequest{Phone: req.Phone})
 		if err != nil {
 			response.Error(c, err)
@@ -75,6 +73,32 @@ func (h *UserHandler) GetUserInfo() gin.HandlerFunc {
 		claim, _ := claims.(*mws.Claim)
 
 		resp, err := h.cli.GetUserInfo(c.Request.Context(), &user.GetUserInfoRequest{UserId: claim.UserId})
+		if err != nil {
+			response.Error(c, err)
+			return
+		}
+
+		response.Success(c, resp)
+	}
+}
+
+func (h *UserHandler) UpdateInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		type Req struct {
+			Name   string `json:"name"`
+			Avatar string `json:"avatar"`
+		}
+		var req Req
+		if err := c.Bind(&req); err != nil {
+			return
+		}
+
+		claims := c.MustGet("claims").(*mws.Claim)
+		resp, err := h.cli.UpdateInfo(c.Request.Context(), &user.UpdateInfoRequest{
+			UserId: claims.UserId,
+			Name:   req.Name,
+			Avatar: req.Avatar,
+		})
 		if err != nil {
 			response.Error(c, err)
 			return

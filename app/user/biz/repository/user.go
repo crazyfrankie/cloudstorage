@@ -25,3 +25,7 @@ func (r *UserRepo) FindByPhone(ctx context.Context, phone string) (dao.User, err
 func (r *UserRepo) FindById(ctx context.Context, id int) (dao.User, error) {
 	return r.dao.FindById(ctx, id)
 }
+
+func (r *UserRepo) UpdateInfo(ctx context.Context, u *dao.User) error {
+	return r.dao.UpdateInfo(ctx, u)
+}

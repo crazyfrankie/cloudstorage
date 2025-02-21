@@ -50,3 +50,19 @@ func (u *UserDao) FindById(ctx context.Context, id int) (User, error) {
 
 	return user, nil
 }
+
+func (u *UserDao) UpdateInfo(ctx context.Context, user *User) error {
+	updates := make(map[string]any, 3)
+	if user.Name != "" {
+		updates["name"] = user.Name
+	}
+	if user.Avatar != "" {
+		updates["avatar"] = user.Avatar
+	}
+
+	if len(updates) > 0 {
+		updates["utime"] = time.Now().Unix()
+	}
+
+	return u.db.WithContext(ctx).Model(&User{}).Where("id = ?", user.Id).Updates(updates).Error
+}

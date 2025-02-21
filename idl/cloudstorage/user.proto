@@ -4,6 +4,8 @@ package user;
 
 option go_package = "/user";
 
+import "idl/cloudstorage/file.proto";
+
 message User {
   int32 id = 1;
   string name = 2;
@@ -35,10 +37,22 @@ message GetUserInfoRequest {
 
 message GetUserInfoResponse {
   User user = 1;
+  file.FileStore file_store = 2;
+}
+
+message UpdateInfoRequest {
+  int32 user_id = 1;
+  string name = 2;
+  string avatar = 3;
+}
+
+message UpdateInfoResponse {
+
 }
 
 service UserService {
   rpc SendCode(SendCodeRequest) returns (SendCodeResponse);
   rpc VerifyCode(VerifyCodeRequest) returns (VerifyCodeResponse);
   rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+  rpc UpdateInfo(UpdateInfoRequest) returns (UpdateInfoResponse);
 }
