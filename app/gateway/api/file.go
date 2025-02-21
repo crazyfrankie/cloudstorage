@@ -212,7 +212,6 @@ func (h *FileHandler) UploadChunk() gin.HandlerFunc {
 			}
 		}
 
-		// 完成上传并获取响应
 		resp, err := stream.CloseAndRecv()
 		if err != nil {
 			response.Error(c, fmt.Errorf("failed to close stream: %v", err))

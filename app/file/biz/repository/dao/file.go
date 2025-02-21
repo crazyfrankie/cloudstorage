@@ -397,3 +397,14 @@ func (d *UploadDao) GetShareLink(ctx context.Context, shareId string) (ShareLink
 
 	return share, nil
 }
+
+// FindFileStoreById 获取用户资源空间
+func (d *UploadDao) FindFileStoreById(ctx context.Context, uid int32) (FileStore, error) {
+	var store FileStore
+	err := d.db.WithContext(ctx).Model(&FileStore{}).Where("user_id = ?", uid).Find(&store).Error
+	if err != nil {
+		return FileStore{}, err
+	}
+
+	return store, nil
+}

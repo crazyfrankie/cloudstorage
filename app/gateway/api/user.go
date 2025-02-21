@@ -21,7 +21,7 @@ func (h *UserHandler) RegisterRoute(r *gin.Engine) {
 	{
 		userGroup.POST("/send-code", h.SendCode())
 		userGroup.POST("/verify-code", h.VerifyCode())
-		userGroup.GET("/info", h.GetUserInfo(), mws.Auth())
+		userGroup.GET("/info", mws.Auth(), h.GetUserInfo())
 	}
 }
 

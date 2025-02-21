@@ -795,6 +795,20 @@ func (s *FileServer) SaveToMyDrive(ctx context.Context, req *file.SaveToMyDriveR
 	return &file.SaveToMyDriveResponse{}, nil
 }
 
+// GetUserFileStore 获取用户资源空间信息
+func (s *FileServer) GetUserFileStore(ctx context.Context, req *file.GetUserFileStoreRequest) (*file.GetUserFileStoreResponse, error) {
+	store, err := s.repo.FindFileStoreById(ctx, req.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+
+	return &file.GetUserFileStoreResponse{FileStore: &file.FileStore{
+		UserId:      store.UserId,
+		Capacity:    store.Capacity,
+		CurrentSize: store.CurrentSize,
+	}}, nil
+}
+
 func (s *FileServer) saveFile(path string, data []byte) error {
 	newFile, err := os.Create(path)
 	if err != nil {

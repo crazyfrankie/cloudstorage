@@ -45,7 +45,7 @@ import (
 
 const (
 	UploadURL = "http://localhost:9091/api/files/upload/chunk"
-	Token     = "your-token" // 替换为实际token
+	//Token     = "your-token" // 替换为实际token
 )
 
 // v2

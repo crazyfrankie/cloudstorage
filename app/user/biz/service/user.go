@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
@@ -98,7 +99,9 @@ func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoReque
 	var u dao.User
 	var resp *file.GetUserFileStoreResponse
 	go func() {
-		u, err = s.repo.FindById(ctx, int(req.GetUserId()))
+		newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		u, err = s.repo.FindById(newCtx, int(req.GetUserId()))
 		if err != nil {
 			log.Printf("failed get user info, %s", err)
 		}
@@ -106,13 +109,16 @@ func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoReque
 	}()
 
 	go func() {
-		resp, err = s.file.GetUserFileStore(ctx, &file.GetUserFileStoreRequest{UserId: req.GetUserId()})
+		newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		resp, err = s.file.GetUserFileStore(newCtx, &file.GetUserFileStoreRequest{UserId: req.GetUserId()})
 		if err != nil {
 			log.Printf("failed get user file store, %s", err)
 		}
 		wg.Done()
 	}()
 
+	wg.Wait()
 	return &user.GetUserInfoResponse{
 		User: &user.User{
 			Id:     int32(u.Id),

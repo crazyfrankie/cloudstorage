@@ -121,3 +121,7 @@ func (r *UploadRepo) CreateShareFile(ctx context.Context, share *dao.ShareFile) 
 func (r *UploadRepo) GetShareLink(ctx context.Context, shareId string) (dao.ShareLink, error) {
 	return dao.ShareLink{}, nil
 }
+
+func (r *UploadRepo) FindFileStoreById(ctx context.Context, uid int32) (dao.FileStore, error) {
+	return r.dao.FindFileStoreById(ctx, uid)
+}
