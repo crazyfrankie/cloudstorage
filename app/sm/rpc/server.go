@@ -31,12 +31,18 @@ import (
 
 var (
 	serviceName = "service/sm"
+	SmReg       = prometheus.NewRegistry()
+	smMetrics   = grpcprom.NewServerMetrics()
 )
 
 type Server struct {
 	*grpc.Server
 	Addr   string
 	client *clientv3.Client
+}
+
+func init() {
+	SmReg.MustRegister(smMetrics)
 }
 
 func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
@@ -51,8 +57,6 @@ func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 	}
 
 	// 设置 Prometheus metrics
-	srvMetrics := grpcprom.NewServerMetrics()
-	prometheus.MustRegister(srvMetrics)
 	labelsFromContext := func(ctx context.Context) prometheus.Labels {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return prometheus.Labels{"traceID": span.TraceID().String()}
@@ -70,15 +74,15 @@ func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 
 	s := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
-			srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
+			smMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
 		),
 		grpc.ChainStreamInterceptor(
-			srvMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
+			smMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.StreamServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
 		))
 	sm.RegisterShortMsgServiceServer(s, sms)
-	srvMetrics.InitializeMetrics(s)
+	smMetrics.InitializeMetrics(s)
 
 	return &Server{
 		Server: s,

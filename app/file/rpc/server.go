@@ -32,12 +32,18 @@ import (
 
 var (
 	serviceName = "service/file"
+	FileReg     = prometheus.NewRegistry()
+	fileMetrics = grpcprom.NewServerMetrics()
 )
 
 type Server struct {
 	*grpc.Server
 	Addr   string
 	client *clientv3.Client
+}
+
+func init() {
+	FileReg.MustRegister(fileMetrics)
 }
 
 func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
@@ -51,9 +57,6 @@ func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 		return nil
 	}
 
-	// 设置 Prometheus metrics
-	srvMetrics := grpcprom.NewServerMetrics()
-	prometheus.MustRegister(srvMetrics)
 	labelsFromContext := func(ctx context.Context) prometheus.Labels {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return prometheus.Labels{"traceID": span.TraceID().String()}
@@ -72,18 +75,18 @@ func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 	s := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
-			srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
+			fileMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
 		),
 		grpc.ChainStreamInterceptor(
-			srvMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
+			fileMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.StreamServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
 		),
 		grpc.MaxRecvMsgSize(20*1024*1024),
 		grpc.MaxSendMsgSize(20*1024*1024))
 
 	file.RegisterFileServiceServer(s, f)
-	srvMetrics.InitializeMetrics(s)
+	fileMetrics.InitializeMetrics(s)
 
 	return &Server{
 		Server: s,

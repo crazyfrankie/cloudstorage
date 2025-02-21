@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
+	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
 	"syscall"
-	"time"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/crazyfrankie/cloudstorage/app/gateway/ioc"
 )
@@ -18,7 +14,22 @@ import (
 func main() {
 	handler := ioc.InitServer()
 
-	go func() {
+	g := &run.Group{}
+
+	server := &http.Server{
+		Addr:    "localhost:9091",
+		Handler: handler,
+	}
+	g.Add(func() error {
+		return server.ListenAndServe()
+	}, func(err error) {
+		if err := server.Close(); err != nil {
+			log.Printf("failed to stop web server, err:%s", err)
+		}
+	})
+
+	fileServer := &http.Server{Addr: ":9096"}
+	g.Add(func() error {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(
 			ioc.FileReg,
@@ -26,12 +37,16 @@ func main() {
 				EnableOpenMetrics: true,
 			},
 		))
-		if err := http.ListenAndServe(":9096", mux); err != nil {
-			log.Fatal(err)
+		fileServer.Handler = mux
+		return fileServer.ListenAndServe()
+	}, func(err error) {
+		if err := fileServer.Close(); err != nil {
+			log.Printf("failed to stop web server, err:%s", err)
 		}
-	}()
+	})
 
-	go func() {
+	userServer := &http.Server{Addr: ":9097"}
+	g.Add(func() error {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(
 			ioc.UserReg,
@@ -39,32 +54,18 @@ func main() {
 				EnableOpenMetrics: true,
 			},
 		))
-		if err := http.ListenAndServe(":9097", mux); err != nil {
-			log.Fatal(err)
+		userServer.Handler = mux
+		return userServer.ListenAndServe()
+	}, func(err error) {
+		if err := userServer.Close(); err != nil {
+			log.Printf("failed to stop web server, err:%s", err)
 		}
-	}()
+	})
 
-	server := &http.Server{
-		Addr:    "localhost:9091",
-		Handler: handler,
+	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))
+
+	if err := g.Run(); err != nil {
+		log.Printf("program interrupted, err:%s", err)
+		return
 	}
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("Server start failed %s", err)
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	<-quit
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("Server forced shutting down err:%s\n", err)
-	}
-
-	log.Printf("Server exited gracefully")
 }
