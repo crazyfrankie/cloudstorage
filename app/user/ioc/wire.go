@@ -7,6 +7,9 @@ import (
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/service"
+	"github.com/crazyfrankie/cloudstorage/app/user/mws"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"os"
 	"time"
 
@@ -52,10 +55,24 @@ func InitRegistry() *clientv3.Client {
 	return cli
 }
 
+func InitMinio() *minio.Client {
+	client, err := minio.New(config.GetConf().Minio.EndPoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(config.GetConf().Minio.AccessKey, config.GetConf().Minio.SecretKey, ""),
+		Secure: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return client
+}
+
 func InitServer() *rpc.Server {
 	wire.Build(
 		InitDB,
 		InitRegistry,
+		InitMinio,
+		mws.NewMinioServer,
 		dao.NewUserDao,
 		repository.NewUserRepo,
 		service.NewUserServer,

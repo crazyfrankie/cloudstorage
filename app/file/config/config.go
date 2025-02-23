@@ -41,10 +41,10 @@ type Redis struct {
 }
 
 type Minio struct {
-	EndPoint   string   `yaml:"endPoint"`
-	AccessKey  string   `yaml:"accessKey"`
-	SecretKey  string   `yaml:"secretKey"`
-	BucketName []string `yaml:"bucketName"`
+	EndPoint   string `yaml:"endPoint"`
+	AccessKey  string `yaml:"accessKey"`
+	SecretKey  string `yaml:"secretKey"`
+	BucketName string `yaml:"bucketName"`
 }
 
 func GetConf() *Config {

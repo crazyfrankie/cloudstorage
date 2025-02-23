@@ -3,8 +3,6 @@ package ioc
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
 	"log/slog"
 	"os"
 	"time"
@@ -16,7 +14,9 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/naming/resolver"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/zipkin"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -54,11 +54,6 @@ var (
 	)
 )
 
-func init() {
-	FileReg.MustRegister(fileMetrics)
-	UserReg.MustRegister(userMetrics)
-}
-
 // interceptorLogger adapts slog logger to interceptor logger.
 // This code is simple enough to be copied and not imported.
 func interceptorLogger(l *slog.Logger) logging.Logger {
@@ -82,6 +77,10 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 		}
 		return nil
 	}
+
+	// 设置 prometheus
+	FileReg.MustRegister(fileMetrics)
+	UserReg.MustRegister(userMetrics)
 
 	// 设置 OpenTelemetry
 	tp := initTracerProvider("cloud-storage/file")

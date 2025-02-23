@@ -41,10 +41,6 @@ type Server struct {
 	client *clientv3.Client
 }
 
-func init() {
-	SmReg.MustRegister(smMetrics)
-}
-
 func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 	// 设置日志
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
@@ -56,6 +52,7 @@ func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 		return nil
 	}
 
+	SmReg.MustRegister(smMetrics)
 	// 设置 Prometheus metrics
 	labelsFromContext := func(ctx context.Context) prometheus.Labels {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {

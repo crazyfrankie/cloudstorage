@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"log"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
+	"github.com/crazyfrankie/cloudstorage/app/user/config"
 	"github.com/crazyfrankie/cloudstorage/app/user/mws"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/sm"
@@ -15,18 +17,19 @@ import (
 )
 
 var (
-	defaultAvatar = "github.com/crazyfrankie/cloud/default.png"
+	defaultAvatar = config.GetConf().Minio.DefaultName
 )
 
 type UserServer struct {
-	repo *repository.UserRepo
-	sm   sm.ShortMsgServiceClient
-	file file.FileServiceClient
+	repo  *repository.UserRepo
+	sm    sm.ShortMsgServiceClient
+	file  file.FileServiceClient
+	minio *mws.MinioServer
 	user.UnimplementedUserServiceServer
 }
 
-func NewUserServer(repo *repository.UserRepo, sm sm.ShortMsgServiceClient, file file.FileServiceClient) *UserServer {
-	return &UserServer{repo: repo, sm: sm, file: file}
+func NewUserServer(repo *repository.UserRepo, sm sm.ShortMsgServiceClient, file file.FileServiceClient, minio *mws.MinioServer) *UserServer {
+	return &UserServer{repo: repo, sm: sm, file: file, minio: minio}
 }
 
 func (s *UserServer) SendCode(ctx context.Context, req *user.SendCodeRequest) (*user.SendCodeResponse, error) {
@@ -97,6 +100,7 @@ func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoReque
 
 	var err error
 	var u dao.User
+	var URL *url.URL
 	var resp *file.GetUserFileStoreResponse
 	go func() {
 		newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -105,6 +109,12 @@ func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoReque
 		if err != nil {
 			log.Printf("failed get user info, %s", err)
 		}
+
+		URL, err = s.minio.PresignedGetObject(newCtx, s.minio.BucketName, u.Avatar, time.Hour*24)
+		if err != nil {
+			log.Printf("failed get user avatar, %s", err)
+		}
+
 		wg.Done()
 	}()
 
@@ -124,7 +134,7 @@ func (s *UserServer) GetUserInfo(ctx context.Context, req *user.GetUserInfoReque
 			Id:     int32(u.Id),
 			Name:   u.Name,
 			Phone:  u.Phone,
-			Avatar: u.Avatar,
+			Avatar: URL.String(),
 		},
 		FileStore: resp.GetFileStore(),
 	}, nil

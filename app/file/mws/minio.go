@@ -19,7 +19,7 @@ type MinioServer struct {
 }
 
 func NewMinioServer(client *minio.Client) *MinioServer {
-	name := config.GetConf().Minio.BucketName[0]
+	name := config.GetConf().Minio.BucketName
 	// 从 client 获取 core
 	core := &minio.Core{Client: client}
 	server := &MinioServer{client: client, BucketName: name, core: core}

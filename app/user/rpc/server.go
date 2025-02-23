@@ -41,10 +41,6 @@ type Server struct {
 	client *clientv3.Client
 }
 
-func init() {
-	UserReg.MustRegister(userMetrics)
-}
-
 func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
 	// 设置日志
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
@@ -63,6 +59,7 @@ func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
 		return nil
 	}
 
+	UserReg.MustRegister(userMetrics)
 	// 设置 OpenTelemetry
 	tp := initTracerProvider("cloud-storage/user")
 	otel.SetTracerProvider(tp)

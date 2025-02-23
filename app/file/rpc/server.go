@@ -3,8 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
-
 	"log"
 	"log/slog"
 	"net"
@@ -12,6 +10,7 @@ import (
 	"time"
 
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/naming/endpoints"
@@ -42,10 +41,6 @@ type Server struct {
 	client *clientv3.Client
 }
 
-func init() {
-	FileReg.MustRegister(fileMetrics)
-}
-
 func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 	// 设置日志
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
@@ -63,6 +58,9 @@ func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 		}
 		return nil
 	}
+
+	// 设置 prometheus
+	FileReg.MustRegister(fileMetrics)
 
 	// 设置 OpenTelemetry
 	tp := initTracerProvider()

@@ -12,7 +12,10 @@ import (
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/repository/dao"
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/service"
 	"github.com/crazyfrankie/cloudstorage/app/user/config"
+	"github.com/crazyfrankie/cloudstorage/app/user/mws"
 	"github.com/crazyfrankie/cloudstorage/app/user/rpc"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.etcd.io/etcd/client/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -30,7 +33,9 @@ func InitServer() *rpc.Server {
 	client := InitRegistry()
 	shortMsgServiceClient := rpc.InitSmClient(client)
 	fileServiceClient := rpc.InitFileClient(client)
-	userServer := service.NewUserServer(userRepo, shortMsgServiceClient, fileServiceClient)
+	minioClient := InitMinio()
+	minioServer := mws.NewMinioServer(minioClient)
+	userServer := service.NewUserServer(userRepo, shortMsgServiceClient, fileServiceClient, minioServer)
 	server := rpc.NewServer(userServer, client)
 	return server
 }
@@ -62,4 +67,16 @@ func InitRegistry() *clientv3.Client {
 	}
 
 	return cli
+}
+
+func InitMinio() *minio.Client {
+	client, err := minio.New(config.GetConf().Minio.EndPoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(config.GetConf().Minio.AccessKey, config.GetConf().Minio.SecretKey, ""),
+		Secure: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return client
 }

@@ -49,11 +49,6 @@ var (
 	)
 )
 
-func init() {
-	FileReg.MustRegister(fileMetrics)
-	SmReg.MustRegister(smMetrics)
-}
-
 func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
 	rpcLogger := logger.With("service", "gRPC/client", "module", "sm")
@@ -70,6 +65,8 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 		return nil
 	}
 
+	FileReg.MustRegister(fileMetrics)
+	SmReg.MustRegister(smMetrics)
 	// 设置 OpenTelemetry
 	tp := initTracerProvider("cloud-storage/sm")
 	otel.SetTracerProvider(tp)
