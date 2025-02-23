@@ -2,8 +2,7 @@ package rpc
 
 import (
 	"context"
-	"log/slog"
-	"os"
+
 	"time"
 
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
@@ -17,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -50,8 +50,12 @@ var (
 )
 
 func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	rpcLogger := logger.With("service", "gRPC/client", "module", "sm")
+	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	//rpcLogger := logger.With("service", "gRPC/client", "module", "sm")
+	rpcLogger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}
@@ -94,7 +98,7 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 		),
 	)
 	if err != nil {
-		logger.Error("failed to init gRPC client", "err", err)
+		//logger.Error("failed to init gRPC client", "err", err)
 		panic(err)
 	}
 
@@ -102,8 +106,12 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 }
 
 func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	rpcLogger := logger.With("service", "gRPC/client", "module", "file")
+	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	//rpcLogger := logger.With("service", "gRPC/client", "module", "file")
+	rpcLogger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}
@@ -144,7 +152,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 		),
 	)
 	if err != nil {
-		logger.Error("failed to init gRPC client", "err", err)
+		//logger.Error("failed to init gRPC client", "err", err)
 		panic(err)
 	}
 

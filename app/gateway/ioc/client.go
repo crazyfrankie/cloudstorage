@@ -3,8 +3,7 @@ package ioc
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
+
 	"time"
 
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
@@ -21,6 +20,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -54,17 +54,52 @@ var (
 	)
 )
 
-// interceptorLogger adapts slog logger to interceptor logger.
+// interceptorLogger adapts zap logger to interceptor logger.
 // This code is simple enough to be copied and not imported.
-func interceptorLogger(l *slog.Logger) logging.Logger {
+func interceptorLogger(l *zap.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
-		l.Log(ctx, slog.Level(lvl), msg, fields...)
+		f := make([]zap.Field, 0, len(fields)/2)
+
+		for i := 0; i < len(fields); i += 2 {
+			key := fields[i]
+			value := fields[i+1]
+
+			switch v := value.(type) {
+			case string:
+				f = append(f, zap.String(key.(string), v))
+			case int:
+				f = append(f, zap.Int(key.(string), v))
+			case bool:
+				f = append(f, zap.Bool(key.(string), v))
+			default:
+				f = append(f, zap.Any(key.(string), v))
+			}
+		}
+
+		logger := l.WithOptions(zap.AddCallerSkip(1)).With(f...)
+
+		switch lvl {
+		case logging.LevelDebug:
+			logger.Debug(msg)
+		case logging.LevelInfo:
+			logger.Info(msg)
+		case logging.LevelWarn:
+			logger.Warn(msg)
+		case logging.LevelError:
+			logger.Error(msg)
+		default:
+			panic(fmt.Sprintf("unknown level %v", lvl))
+		}
 	})
 }
 
 func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	rpcLogger := logger.With("service", "gRPC/client", "module", "file")
+	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	//rpcLogger := logger.With("service", "gRPC/client", "module", "file")
+	rpcLogger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}
@@ -107,7 +142,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 			logging.StreamClientInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID))),
 	)
 	if err != nil {
-		logger.Error("failed to init gRPC client", "err", err)
+		//logger.Error("failed to init gRPC client", "err", err)
 		panic(err)
 	}
 
@@ -115,8 +150,12 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 }
 
 func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	rpcLogger := logger.With("service", "gRPC/client", "module", "user")
+	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	//rpcLogger := logger.With("service", "gRPC/client", "module", "user")
+	rpcLogger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}
@@ -156,7 +195,7 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 			logging.StreamClientInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID))),
 	)
 	if err != nil {
-		logger.Error("failed to init gRPC client", "err", err)
+		//logger.Error("failed to init gRPC client", "err", err)
 		panic(err)
 	}
 
