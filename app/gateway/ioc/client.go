@@ -96,7 +96,9 @@ func interceptorLogger(l *zap.Logger) logging.Logger {
 func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
 	//rpcLogger := logger.With("service", "gRPC/client", "module", "file")
-	rpcLogger, err := zap.NewProduction()
+	config := zap.NewProductionConfig()
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	rpcLogger, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
@@ -142,8 +144,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 			logging.StreamClientInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID))),
 	)
 	if err != nil {
-		//logger.Error("failed to init gRPC client", "err", err)
-		panic(err)
+		rpcLogger.Error("failed to init gRPC client", zap.Error(err))
 	}
 
 	return file.NewFileServiceClient(conn)
@@ -152,7 +153,9 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
 	//rpcLogger := logger.With("service", "gRPC/client", "module", "user")
-	rpcLogger, err := zap.NewProduction()
+	config := zap.NewProductionConfig()
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	rpcLogger, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
@@ -195,8 +198,7 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 			logging.StreamClientInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID))),
 	)
 	if err != nil {
-		//logger.Error("failed to init gRPC client", "err", err)
-		panic(err)
+		rpcLogger.Error("failed to init gRPC client", zap.Error(err))
 	}
 
 	return user.NewUserServiceClient(conn)

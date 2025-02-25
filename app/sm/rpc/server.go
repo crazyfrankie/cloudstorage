@@ -3,11 +3,11 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"log"
 	"net"
 	"time"
 
+	"github.com/crazyfrankie/framework-plugin/grpcx/interceptor/circuitbreaker"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"github.com/crazyfrankie/cloudstorage/app/sm/biz/service"
@@ -76,6 +77,7 @@ func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 		grpc.ChainUnaryInterceptor(
 			smMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
+			circuitbreaker.NewInterceptorBuilder().Build(),
 		),
 		grpc.ChainStreamInterceptor(
 			smMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),

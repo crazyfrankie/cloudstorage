@@ -3,12 +3,11 @@ package rpc
 import (
 	"context"
 	"fmt"
-
 	"log"
 	"net"
 	"time"
 
-	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
+	"github.com/crazyfrankie/framework-plugin/grpcx/interceptor/circuitbreaker"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,6 +26,7 @@ import (
 
 	"github.com/crazyfrankie/cloudstorage/app/user/biz/service"
 	"github.com/crazyfrankie/cloudstorage/app/user/config"
+	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
 )
 
 var (
@@ -77,6 +77,7 @@ func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
 		grpc.ChainUnaryInterceptor(
 			userMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
+			circuitbreaker.NewInterceptorBuilder().Build(),
 		),
 		grpc.ChainStreamInterceptor(
 			userMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),

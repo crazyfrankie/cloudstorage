@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
@@ -52,7 +51,9 @@ var (
 func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
 	//rpcLogger := logger.With("service", "gRPC/client", "module", "sm")
-	rpcLogger, err := zap.NewProduction()
+	config := zap.NewProductionConfig()
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	rpcLogger, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
@@ -98,8 +99,7 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 		),
 	)
 	if err != nil {
-		//logger.Error("failed to init gRPC client", "err", err)
-		panic(err)
+		rpcLogger.Error("failed to init gRPC client", zap.Error(err))
 	}
 
 	return sm.NewShortMsgServiceClient(conn)
@@ -108,7 +108,9 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
 	//rpcLogger := logger.With("service", "gRPC/client", "module", "file")
-	rpcLogger, err := zap.NewProduction()
+	config := zap.NewProductionConfig()
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	rpcLogger, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
@@ -152,8 +154,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 		),
 	)
 	if err != nil {
-		//logger.Error("failed to init gRPC client", "err", err)
-		panic(err)
+		rpcLogger.Error("failed to init gRPC client", zap.Error(err))
 	}
 
 	return file.NewFileServiceClient(conn)

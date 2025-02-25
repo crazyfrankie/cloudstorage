@@ -18,7 +18,7 @@ func main() {
 	g := &run.Group{}
 
 	server := &http.Server{
-		Addr:    "localhost:9091",
+		Addr:    "0.0.0.0:9091",
 		Handler: handler,
 	}
 	g.Add(func() error {

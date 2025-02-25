@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/crazyfrankie/framework-plugin/grpcx/interceptor/circuitbreaker"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -78,6 +79,7 @@ func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 		grpc.ChainUnaryInterceptor(
 			fileMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
+			circuitbreaker.NewInterceptorBuilder().Build(),
 		),
 		grpc.ChainStreamInterceptor(
 			fileMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
