@@ -1,11 +1,10 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"github.com/crazyfrankie/cloudstorage/app/gateway/common/response"
 	"github.com/crazyfrankie/cloudstorage/app/gateway/mws"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
+	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
@@ -63,7 +62,9 @@ func (h *UserHandler) VerifyCode() gin.HandlerFunc {
 			return
 		}
 
-		response.Success(c, resp)
+		c.SetCookie("cloudstorage", resp.Token, 86400, "/", "", false, true)
+
+		response.Success(c, nil)
 	}
 }
 

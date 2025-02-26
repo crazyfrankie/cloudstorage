@@ -20,8 +20,11 @@ type Claim struct {
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenHeader := c.GetHeader("Authorization")
-		token := extractToken(tokenHeader)
+		token, err := c.Cookie("cloudstorage")
+		if err != nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 
 		claims, err := parseToken(token)
 		if err != nil {
