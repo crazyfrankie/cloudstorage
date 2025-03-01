@@ -11,6 +11,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"time"
 )
 
@@ -42,6 +45,9 @@ func InitRegistry() *clientv3.Client {
 }
 
 func InitMws() []gin.HandlerFunc {
+	tp := initTracerProvider("cloud-storage/gateway")
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	return []gin.HandlerFunc{cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8081"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -49,7 +55,7 @@ func InitMws() []gin.HandlerFunc {
 		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-	}),
+	}), otelgin.Middleware("cloudstorage/gateway"),
 	}
 }
 

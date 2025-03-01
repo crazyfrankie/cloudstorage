@@ -66,7 +66,7 @@ func NewServer(sms *service.SmServer, client *clientv3.Client) *Server {
 	}
 
 	// 设置 OpenTelemetry
-	tp := initTracerProvider()
+	tp := initTracerProvider("cloud-storage/server/sm")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -190,8 +190,8 @@ func interceptorLogger(l *zap.Logger) logging.Logger {
 	})
 }
 
-func initTracerProvider() *trace.TracerProvider {
-	res, err := newResource("cloud-storage/sm", "v0.0.1")
+func initTracerProvider(servicename string) *trace.TracerProvider {
+	res, err := newResource(servicename, "v0.0.1")
 	if err != nil {
 		fmt.Printf("failed create resource, %s", err)
 	}

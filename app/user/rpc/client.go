@@ -73,7 +73,7 @@ func InitSmClient(cli *clientv3.Client) sm.ShortMsgServiceClient {
 	FileReg.MustRegister(fileMetrics)
 	SmReg.MustRegister(smMetrics)
 	// 设置 OpenTelemetry
-	tp := initTracerProvider("cloud-storage/sm")
+	tp := initTracerProvider("cloud-storage/client/sm")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -127,7 +127,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 		return nil
 	}
 	// 设置 OpenTelemetry
-	tp := initTracerProvider("cloud-storage/file")
+	tp := initTracerProvider("cloud-storage/client/file")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},

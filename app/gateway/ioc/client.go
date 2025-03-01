@@ -120,7 +120,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 	UserReg.MustRegister(userMetrics)
 
 	// 设置 OpenTelemetry
-	tp := initTracerProvider("cloud-storage/file")
+	tp := initTracerProvider("cloud-storage/client/file")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -173,7 +173,7 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 	}
 
 	// 设置 OpenTelemetry
-	tp := initTracerProvider("cloud-storage/user")
+	tp := initTracerProvider("cloud-storage/client/user")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},

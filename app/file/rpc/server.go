@@ -67,7 +67,7 @@ func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
 	FileReg.MustRegister(fileMetrics)
 
 	// 设置 OpenTelemetry
-	tp := initTracerProvider()
+	tp := initTracerProvider("cloud-storage/server/file")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -195,8 +195,8 @@ func interceptorLogger(l *zap.Logger) logging.Logger {
 	})
 }
 
-func initTracerProvider() *trace.TracerProvider {
-	res, err := newResource("cloud-storage/file", "v0.0.1")
+func initTracerProvider(servicename string) *trace.TracerProvider {
+	res, err := newResource(servicename, "v0.0.1")
 	if err != nil {
 		fmt.Printf("failed create resource, %s", err)
 	}

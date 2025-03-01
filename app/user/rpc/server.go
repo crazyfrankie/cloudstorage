@@ -65,7 +65,7 @@ func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
 
 	UserReg.MustRegister(userMetrics)
 	// 设置 OpenTelemetry
-	tp := initTracerProvider("cloud-storage/user")
+	tp := initTracerProvider("cloud-storage/server/user")
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},

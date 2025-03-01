@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/crazyfrankie/cloudstorage/app/file/rpc"
-	"github.com/oklog/run"
 	"log"
 	"net/http"
 	"syscall"
 	"time"
 
+	"github.com/crazyfrankie/cloudstorage/app/file/rpc"
 	"github.com/joho/godotenv"
+	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/ioc"
