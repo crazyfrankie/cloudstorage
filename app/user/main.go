@@ -7,21 +7,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/crazyfrankie/cloudstorage/app/user/ioc"
+	infrarpc "github.com/crazyfrankie/cloudstorage/app/user/internal/biz/infra/rpc"
 	"github.com/crazyfrankie/cloudstorage/app/user/rpc"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	server := ioc.InitServer()
+	server := rpc.NewServer()
 
 	g := &run.Group{}
 
@@ -56,7 +50,7 @@ func main() {
 	g.Add(func() error {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(
-			rpc.FileReg,
+			infrarpc.FileReg,
 			promhttp.HandlerOpts{
 				EnableOpenMetrics: true,
 			},
@@ -76,7 +70,7 @@ func main() {
 	g.Add(func() error {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(
-			rpc.SmReg,
+			infrarpc.SmReg,
 			promhttp.HandlerOpts{
 				EnableOpenMetrics: true,
 			},

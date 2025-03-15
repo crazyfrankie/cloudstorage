@@ -8,20 +8,12 @@ import (
 	"time"
 
 	"github.com/crazyfrankie/cloudstorage/app/file/rpc"
-	"github.com/joho/godotenv"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/crazyfrankie/cloudstorage/app/file/ioc"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	server := ioc.InitServer()
+	server := rpc.NewServer()
 
 	g := &run.Group{}
 

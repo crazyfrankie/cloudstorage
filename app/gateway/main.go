@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/oklog/run"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"syscall"
 	"time"
+
+	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/crazyfrankie/cloudstorage/app/gateway/ioc"
 )

@@ -24,8 +24,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/crazyfrankie/cloudstorage/app/file/biz/service"
-	"github.com/crazyfrankie/cloudstorage/app/file/config"
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/config"
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/ioc"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/file"
 )
 
@@ -41,14 +41,14 @@ type Server struct {
 	client *clientv3.Client
 }
 
-func NewServer(f *service.FileServer, client *clientv3.Client) *Server {
-	// 设置日志
-	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	//rpcLogger := logger.With("service", "gRPC/server", "module", "file")
+func NewServer() *Server {
+	client := ioc.InitRegistry()
+	f := ioc.InitServer()
 	rpcLogger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
+
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}

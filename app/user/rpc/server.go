@@ -24,8 +24,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/crazyfrankie/cloudstorage/app/user/biz/service"
-	"github.com/crazyfrankie/cloudstorage/app/user/config"
+	"github.com/crazyfrankie/cloudstorage/app/user/internal/config"
+	"github.com/crazyfrankie/cloudstorage/app/user/internal/ioc"
 	"github.com/crazyfrankie/cloudstorage/rpc_gen/user"
 )
 
@@ -41,14 +41,11 @@ type Server struct {
 	client *clientv3.Client
 }
 
-func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
-	// 设置日志
-	//logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
-	//rpcLogger := logger.With("service", "gRPC/server", "module", "user")
-	rpcLogger, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
+func NewServer() *Server {
+	u := ioc.InitUserServer()
+	client := ioc.InitRegistry()
+	logger := ioc.InitServerLog()
+
 	logTraceID := func(ctx context.Context) logging.Fields {
 		if span := oteltrace.SpanContextFromContext(ctx); span.IsSampled() {
 			return logging.Fields{"traceID", span.TraceID().String()}
@@ -76,12 +73,12 @@ func NewServer(u *service.UserServer, client *clientv3.Client) *Server {
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			userMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
-			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
+			logging.UnaryServerInterceptor(interceptorLogger(logger), logging.WithFieldsFromContext(logTraceID)),
 			circuitbreaker.NewInterceptorBuilder().Build(),
 		),
 		grpc.ChainStreamInterceptor(
 			userMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(labelsFromContext)),
-			logging.StreamServerInterceptor(interceptorLogger(rpcLogger), logging.WithFieldsFromContext(logTraceID)),
+			logging.StreamServerInterceptor(interceptorLogger(logger), logging.WithFieldsFromContext(logTraceID)),
 		))
 	user.RegisterUserServiceServer(s, u)
 	userMetrics.InitializeMetrics(s)

@@ -10,12 +10,11 @@ import (
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/crazyfrankie/cloudstorage/app/sm/ioc"
 	"github.com/crazyfrankie/cloudstorage/app/sm/rpc"
 )
 
 func main() {
-	server := ioc.InitServer()
+	server := rpc.NewServer()
 
 	g := &run.Group{}
 
