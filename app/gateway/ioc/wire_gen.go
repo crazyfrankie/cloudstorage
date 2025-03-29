@@ -26,7 +26,9 @@ func InitServer() *gin.Engine {
 	userHandler := api.NewUserHandler(userServiceClient)
 	fileServiceClient := InitFileClient(client)
 	fileHandler := api.NewFileHandler(fileServiceClient)
-	engine := InitGin(v, userHandler, fileHandler)
+	connectionManager := api.NewConnectionManager()
+	syncHandler := api.NewSyncHandler(connectionManager)
+	engine := InitGin(v, userHandler, fileHandler, syncHandler)
 	return engine
 }
 
@@ -59,13 +61,14 @@ func InitMws() []gin.HandlerFunc {
 	}
 }
 
-func InitGin(mws []gin.HandlerFunc, user *api.UserHandler, file *api.FileHandler) *gin.Engine {
+func InitGin(mws []gin.HandlerFunc, user *api.UserHandler, file *api.FileHandler, sync *api.SyncHandler) *gin.Engine {
 	server := gin.Default()
 	server.MaxMultipartMemory = 100 * 1024 * 1024
 	server.Use(mws...)
 
 	user.RegisterRoute(server)
 	file.RegisterRoute(server)
+	sync.RegisterRoute(server)
 
 	return server
 }

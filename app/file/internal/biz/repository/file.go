@@ -20,6 +20,11 @@ func (r *UploadRepo) CreateFile(ctx context.Context, file *dao.File) error {
 	return r.dao.CreateFile(ctx, file)
 }
 
+// UpdateFile 更新文件
+func (r *UploadRepo) UpdateFile(ctx context.Context, file *dao.File) error {
+	return r.dao.UpdateFile(ctx, file)
+}
+
 // GetFile 获取文件信息
 func (r *UploadRepo) GetFile(ctx context.Context, fid int64, uid int32) (dao.File, error) {
 	return r.dao.GetFile(ctx, fid, uid)

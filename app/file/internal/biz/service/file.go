@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository"
@@ -25,11 +26,12 @@ type FileServer struct {
 	repo   *repository.UploadRepo
 	minio  *mws.MinioServer
 	worker DownloadWorker
+	kafka  *mws.KafkaProducer
 	file.UnimplementedFileServiceServer
 }
 
-func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker DownloadWorker) *FileServer {
-	return &FileServer{repo: repo, minio: minio, worker: worker}
+func NewFileServer(repo *repository.UploadRepo, minio *mws.MinioServer, worker DownloadWorker, kafka *mws.KafkaProducer) *FileServer {
+	return &FileServer{repo: repo, minio: minio, worker: worker, kafka: kafka}
 }
 
 // Upload 处理小文件上传
@@ -460,6 +462,74 @@ func (s *FileServer) ResumeDownload(ctx context.Context, req *file.ResumeDownloa
 	return &file.ResumeDownloadResponse{
 		NewTaskId: newTaskId,
 	}, nil
+}
+
+// UpdateFile 更新文件内容
+func (s *FileServer) UpdateFile(ctx context.Context, req *file.UpdateFileRequest) (*file.UpdateFileResponse, error) {
+	// 检查文件是否存在
+	oldFile, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 计算新文件的hash
+	hash := md5.Sum(req.Data)
+	hashStr := fmt.Sprintf("%x", hash)
+
+	// 检查存储空间是否足够(需要额外空间)
+	sizeDiff := int64(len(req.Data)) - oldFile.Size
+	if sizeDiff > 0 {
+		enough, err := s.repo.QueryCapacity(ctx, req.UserId, sizeDiff)
+		if err != nil {
+			return nil, err
+		}
+		if !enough {
+			return nil, errors.New("insufficient storage space")
+		}
+	}
+
+	// 文件名处理
+	fileName := oldFile.Name
+	if req.Name != "" {
+		fileName = req.Name
+	}
+
+	// 保存到MinIO
+	_, err = s.minio.PutToBucket(ctx, s.minio.BucketName, fileName, int64(len(req.Data)), req.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// 更新数据库记录
+	err = s.repo.UpdateFile(ctx, &dao.File{
+		Id:     req.FileId,
+		UserId: req.UserId,
+		Name:   fileName,
+		Hash:   hashStr,
+		Size:   int64(len(req.Data)),
+		Utime:  time.Now().Unix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 发送文件变更事件
+	go func() {
+		event := &mws.FileChangeEvent{
+			EventType: "update",
+			FileId:    req.FileId,
+			UserId:    req.UserId,
+			Name:      fileName,
+			Size:      int64(len(req.Data)),
+			Timestamp: time.Now(),
+		}
+
+		if err := s.kafka.SendFileEvent(context.Background(), event); err != nil {
+			log.Printf("Failed to send file change event: %v", err)
+		}
+	}()
+
+	return &file.UpdateFileResponse{Success: true}, nil
 }
 
 // calculateTotalSize 计算总大小

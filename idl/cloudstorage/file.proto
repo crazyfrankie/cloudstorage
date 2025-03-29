@@ -274,6 +274,17 @@ message GetUserFileStoreResponse {
   FileStore file_store = 1;
 }
 
+message UpdateFileRequest {
+  int64 file_id = 1;    // 要更新的文件ID
+  int32 user_id = 2;    // 用户ID
+  bytes data = 3;       // 新的文件内容
+  string name = 4;      // 可选：新的文件名
+}
+
+message UpdateFileResponse {
+  bool success = 1;
+}
+
 service FileService {
   rpc Upload(UploadRequest) returns (UploadResponse);
   rpc CreateFileStore(CreateFileStoreRequest) returns (CreateFileStoreResponse);
@@ -295,4 +306,5 @@ service FileService {
   rpc CreateShareLink(CreateShareLinkRequest) returns (CreateShareLinkResponse);
   rpc SaveToMyDrive(SaveToMyDriveRequest) returns (SaveToMyDriveResponse);
   rpc GetUserFileStore(GetUserFileStoreRequest) returns (GetUserFileStoreResponse);
+  rpc UpdateFile(UpdateFileRequest) returns (UpdateFileResponse);
 }

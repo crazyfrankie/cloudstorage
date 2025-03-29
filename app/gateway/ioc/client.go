@@ -127,7 +127,7 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 		propagation.Baggage{},
 	))
 	builder, err := resolver.NewBuilder(cli)
-	conn, err := grpc.Dial("etcd:///service/file",
+	conn, err := grpc.NewClient("etcd:///service/file",
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(20*1024*1024), // 10MB
 			grpc.MaxCallRecvMsgSize(20*1024*1024),
@@ -181,7 +181,7 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 	))
 
 	builder, err := resolver.NewBuilder(cli)
-	conn, err := grpc.Dial("etcd:///service/user",
+	conn, err := grpc.NewClient("etcd:///service/user",
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(20*1024*1024), // 10MB
 			grpc.MaxCallRecvMsgSize(20*1024*1024),

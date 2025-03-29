@@ -36,7 +36,8 @@ func InitServer() *service.FileServer {
 	client := InitMinio()
 	minioServer := mws.NewMinioServer(client)
 	downloadWorker := service.NewRedisWorker(uploadRepo, minioServer)
-	fileServer := service.NewFileServer(uploadRepo, minioServer, downloadWorker)
+	kafkaProducer := mws.NewKafkaProducer()
+	fileServer := service.NewFileServer(uploadRepo, minioServer, downloadWorker, kafkaProducer)
 	return fileServer
 }
 

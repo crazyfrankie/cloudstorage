@@ -83,6 +83,7 @@ func InitServer() *service.FileServer {
 		cache.NewFileCache,
 		repository.NewUploadRepo,
 		mws.NewMinioServer,
+		mws.NewKafkaProducer,
 		service.NewRedisWorker,
 		service.NewFileServer,
 	)

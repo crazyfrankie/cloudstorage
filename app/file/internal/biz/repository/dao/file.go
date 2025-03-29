@@ -92,6 +92,54 @@ func (d *UploadDao) CreateFile(ctx context.Context, file *File) error {
 	return nil
 }
 
+// UpdateFile 更新文件
+func (d *UploadDao) UpdateFile(ctx context.Context, file *File) error {
+	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var oldFile File
+		if err := tx.WithContext(ctx).Where("id = ? AND user_id = ? AND status = 0", file.Id, file.UserId).First(&oldFile).Error; err != nil {
+			return err
+		}
+
+		// 计算空间变化
+		sizeDiff := file.Size - oldFile.Size
+
+		// 更新文件记录
+		updates := map[string]interface{}{
+			"utime": time.Now().Unix(),
+		}
+
+		if file.Name != "" {
+			updates["name"] = file.Name
+		}
+		if file.Hash != "" {
+			updates["hash"] = file.Hash
+		}
+		if file.Size > 0 {
+			updates["size"] = file.Size
+		}
+
+		if err := tx.Model(&File{}).Where("id = ?", file.Id).Updates(updates).Error; err != nil {
+			return err
+		}
+
+		// 更新存储空间使用量
+		if sizeDiff != 0 {
+			expr := "current_size + ?"
+			if sizeDiff < 0 {
+				expr = "current_size - ?"
+				sizeDiff = -sizeDiff
+			}
+
+			if err := tx.Model(&FileStore{}).Where("user_id = ?", file.UserId).
+				Update("current_size", gorm.Expr(expr, sizeDiff)).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 func (d *UploadDao) GetFile(ctx context.Context, fid int64, uid int32) (File, error) {
 	var file File
 	err := d.db.WithContext(ctx).Model(&File{}).Where("id = ? AND user_id = ?", fid, uid).Find(&file).Error
