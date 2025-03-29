@@ -117,7 +117,6 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 
 	// 设置 prometheus
 	FileReg.MustRegister(fileMetrics)
-	UserReg.MustRegister(userMetrics)
 
 	// 设置 OpenTelemetry
 	tp := initTracerProvider("cloud-storage/client/file")
@@ -132,6 +131,19 @@ func InitFileClient(cli *clientv3.Client) file.FileServiceClient {
 			grpc.MaxCallSendMsgSize(20*1024*1024), // 10MB
 			grpc.MaxCallRecvMsgSize(20*1024*1024),
 		),
+		grpc.WithDefaultServiceConfig(`{
+        "loadBalancingPolicy": "round_robin",
+        "methodConfig": [{
+            "name": [{"service": "file.FileService"}],
+            "retryPolicy": {
+                "maxAttempts": 3,
+                "initialBackoff": "0.1s",
+                "maxBackoff": "1s",
+                "backoffMultiplier": 2.0,
+                "retryableStatusCodes": ["UNAVAILABLE"]
+            }
+        }]
+    }`),
 		grpc.WithResolvers(builder),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
@@ -172,6 +184,7 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 		return nil
 	}
 
+	UserReg.MustRegister(userMetrics)
 	// 设置 OpenTelemetry
 	tp := initTracerProvider("cloud-storage/client/user")
 	otel.SetTracerProvider(tp)
@@ -186,6 +199,19 @@ func InitUserClient(cli *clientv3.Client) user.UserServiceClient {
 			grpc.MaxCallSendMsgSize(20*1024*1024), // 10MB
 			grpc.MaxCallRecvMsgSize(20*1024*1024),
 		),
+		grpc.WithDefaultServiceConfig(`{
+        "loadBalancingPolicy": "round_robin",
+        "methodConfig": [{
+            "name": [{"service": "user.UserService"}],
+            "retryPolicy": {
+                "maxAttempts": 3,
+                "initialBackoff": "0.1s",
+                "maxBackoff": "1s",
+                "backoffMultiplier": 2.0,
+                "retryableStatusCodes": ["UNAVAILABLE"]
+            }
+        }]
+    }`),
 		grpc.WithResolvers(builder),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
