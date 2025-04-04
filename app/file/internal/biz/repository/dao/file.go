@@ -10,17 +10,19 @@ import (
 )
 
 type File struct {
-	Id       int64  `gorm:"primaryKey,autoIncrement"`
-	UserId   int32  `gorm:"index:uid_fld_status"`
-	Name     string `gorm:"unique"` // 修改为同文件夹下唯一
-	FolderId int64  `gorm:"index:uid_fld_status"`
-	Path     string
-	Hash     string `gorm:"index"` // 添加索引以优化秒传查询
-	Type     string
-	Size     int64
-	Status   int8 `gorm:"index:uid_fld_status"`
-	Ctime    int64
-	Utime    int64
+	Id             int64  `gorm:"primaryKey"`
+	Name           string `gorm:"type:varchar(255);not null"`
+	Hash           string `gorm:"type:varchar(32);not null"`
+	Type           string `gorm:"type:varchar(50);not null"`
+	Path           string `gorm:"type:varchar(255);not null"`
+	Size           int64  `gorm:"not null"`
+	UserId         int32  `gorm:"not null"`
+	FolderId       int64  `gorm:"not null"`
+	Ctime          int64  `gorm:"not null"`
+	Utime          int64  `gorm:"not null"`
+	Version        int32  `gorm:"not null;default:1"` // 文件版本号
+	DeviceId       string `gorm:"type:varchar(64)"`   // 设备ID
+	LastModifiedBy string `gorm:"type:varchar(64)"`   // 最后修改者
 }
 
 // ShareLink 分享链接表

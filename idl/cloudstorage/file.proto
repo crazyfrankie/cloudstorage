@@ -22,6 +22,9 @@ message File {
   int64 size = 6;
   string type = 7;
   string utime = 8;
+  int32 version = 9;  // 文件版本号
+  string device_id = 10;  // 设备ID
+  string last_modified_by = 11;  // 最后修改者
 }
 
 message Folder {
@@ -275,14 +278,17 @@ message GetUserFileStoreResponse {
 }
 
 message UpdateFileRequest {
-  int64 file_id = 1;    // 要更新的文件ID
-  int32 user_id = 2;    // 用户ID
-  bytes data = 3;       // 新的文件内容
-  string name = 4;      // 可选：新的文件名
+  int64 file_id = 1;
+  int32 user_id = 2;
+  bytes data = 3;
+  string name = 4;
+  string device_id = 5;  // 设备ID
 }
 
 message UpdateFileResponse {
-  bool success = 1;
+  File file = 1;
+  bool has_conflict = 2;  // 是否存在冲突
+  string conflict_message = 3;  // 冲突信息
 }
 
 service FileService {

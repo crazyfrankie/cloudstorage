@@ -2,19 +2,19 @@ package service
 
 import (
 	"context"
-	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository"
-	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository/cache"
-	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository/dao"
-	"github.com/crazyfrankie/cloudstorage/app/file/internal/mws"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository"
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository/cache"
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/biz/repository/dao"
+	"github.com/crazyfrankie/cloudstorage/app/file/internal/mws"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -464,72 +464,82 @@ func (s *FileServer) ResumeDownload(ctx context.Context, req *file.ResumeDownloa
 	}, nil
 }
 
-// UpdateFile 更新文件内容
+// UpdateFile 更新文件，包含版本冲突检测
 func (s *FileServer) UpdateFile(ctx context.Context, req *file.UpdateFileRequest) (*file.UpdateFileResponse, error) {
-	// 检查文件是否存在
-	oldFile, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
+	// 获取当前文件信息
+	currentFile, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	// 计算新文件的hash
-	hash := md5.Sum(req.Data)
-	hashStr := fmt.Sprintf("%x", hash)
-
-	// 检查存储空间是否足够(需要额外空间)
-	sizeDiff := int64(len(req.Data)) - oldFile.Size
-	if sizeDiff > 0 {
-		enough, err := s.repo.QueryCapacity(ctx, req.UserId, sizeDiff)
-		if err != nil {
-			return nil, err
-		}
-		if !enough {
-			return nil, errors.New("insufficient storage space")
-		}
+	// 检查是否存在版本冲突
+	if currentFile.DeviceId != "" && currentFile.DeviceId != req.DeviceId {
+		// 如果文件已被其他设备修改，返回冲突信息
+		return &file.UpdateFileResponse{
+			File: &file.File{
+				Id:             int32(currentFile.Id),
+				Name:           currentFile.Name,
+				FolderId:       currentFile.FolderId,
+				UserId:         currentFile.UserId,
+				Size:           currentFile.Size,
+				Type:           currentFile.Type,
+				Utime:          time.Unix(currentFile.Utime, 0).Format(time.RFC3339),
+				Version:        currentFile.Version,
+				DeviceId:       currentFile.DeviceId,
+				LastModifiedBy: currentFile.LastModifiedBy,
+			},
+			HasConflict:     true,
+			ConflictMessage: fmt.Sprintf("文件已被设备 %s 修改，请先同步最新版本", currentFile.DeviceId),
+		}, nil
 	}
 
-	// 文件名处理
-	fileName := oldFile.Name
+	// 更新文件内容
+	err = s.saveFile(currentFile.Path, req.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// 更新文件元数据
+	now := time.Now().Unix()
+	currentFile.Version++
+	currentFile.DeviceId = req.DeviceId
+	currentFile.LastModifiedBy = req.DeviceId
+	currentFile.Utime = now
 	if req.Name != "" {
-		fileName = req.Name
-	}
-
-	// 保存到MinIO
-	_, err = s.minio.PutToBucket(ctx, s.minio.BucketName, fileName, int64(len(req.Data)), req.Data)
-	if err != nil {
-		return nil, err
+		currentFile.Name = req.Name
 	}
 
 	// 更新数据库记录
-	err = s.repo.UpdateFile(ctx, &dao.File{
-		Id:     req.FileId,
-		UserId: req.UserId,
-		Name:   fileName,
-		Hash:   hashStr,
-		Size:   int64(len(req.Data)),
-		Utime:  time.Now().Unix(),
-	})
+	err = s.repo.UpdateFile(ctx, &currentFile)
 	if err != nil {
 		return nil, err
 	}
 
-	// 发送文件变更事件
+	// 异步更新 MinIO
 	go func() {
-		event := &mws.FileChangeEvent{
-			EventType: "update",
-			FileId:    req.FileId,
-			UserId:    req.UserId,
-			Name:      fileName,
-			Size:      int64(len(req.Data)),
-			Timestamp: time.Now(),
-		}
-
-		if err := s.kafka.SendFileEvent(context.Background(), event); err != nil {
-			log.Printf("Failed to send file change event: %v", err)
+		newCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		_, err := s.minio.PutToBucket(newCtx, s.minio.BucketName, currentFile.Name, currentFile.Size, req.Data)
+		if err != nil {
+			log.Printf("failed to update oss:%s", currentFile.Name)
 		}
 	}()
 
-	return &file.UpdateFileResponse{Success: true}, nil
+	return &file.UpdateFileResponse{
+		File: &file.File{
+			Id:             int32(currentFile.Id),
+			Name:           currentFile.Name,
+			FolderId:       currentFile.FolderId,
+			UserId:         currentFile.UserId,
+			Size:           currentFile.Size,
+			Type:           currentFile.Type,
+			Utime:          time.Unix(currentFile.Utime, 0).Format(time.RFC3339),
+			Version:        currentFile.Version,
+			DeviceId:       currentFile.DeviceId,
+			LastModifiedBy: currentFile.LastModifiedBy,
+		},
+		HasConflict: false,
+	}, nil
 }
 
 // calculateTotalSize 计算总大小
@@ -841,7 +851,6 @@ func (s *FileServer) SaveToMyDrive(ctx context.Context, req *file.SaveToMyDriveR
 			Size:     f.Size,
 			FolderId: req.ToFolderId,
 			Path:     f.Path,
-			Status:   1,
 		}
 		if err := s.repo.CreateFile(ctx, newFile); err != nil {
 			return nil, err

@@ -175,6 +175,12 @@ func (h *FileHandler) UploadChunk() gin.HandlerFunc {
 func (h *FileHandler) UpdateFile() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fileId, _ := strconv.ParseInt(c.PostForm("fileId"), 10, 64)
+		deviceId := c.PostForm("deviceId")
+		if deviceId == "" {
+			response.Error(c, errors.New("deviceId is required"))
+			return
+		}
+
 		f, header, err := c.Request.FormFile("file")
 		if err != nil {
 			response.Error(c, err)
@@ -190,14 +196,20 @@ func (h *FileHandler) UpdateFile() gin.HandlerFunc {
 
 		claims := c.MustGet("claims").(*mws.Claim)
 		resp, err := h.cli.UpdateFile(c.Request.Context(), &file.UpdateFileRequest{
-			FileId: fileId,
-			UserId: claims.UserId,
-			Data:   data,
-			Name:   header.Filename,
+			FileId:   fileId,
+			UserId:   claims.UserId,
+			Data:     data,
+			Name:     header.Filename,
+			DeviceId: deviceId,
 		})
 
 		if err != nil {
 			response.Error(c, err)
+			return
+		}
+
+		if resp.HasConflict {
+			response.Error(c, errors.New(resp.ConflictMessage))
 			return
 		}
 
