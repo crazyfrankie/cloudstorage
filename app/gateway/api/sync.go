@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/segmentio/kafka-go"
 
+	"github.com/crazyfrankie/cloudstorage/app/gateway/common/response"
 	"github.com/crazyfrankie/cloudstorage/app/gateway/mws"
 )
 
@@ -157,6 +158,7 @@ func (h *SyncHandler) HandleWebSocket() gin.HandlerFunc {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			log.Printf("Error upgrading to WebSocket: %v", err)
+			response.Error(c, err)
 			return
 		}
 
@@ -172,9 +174,15 @@ func (h *SyncHandler) HandleWebSocket() gin.HandlerFunc {
 		// 保持连接
 		for {
 			// 读取客户端消息，主要是为了检测断开
-			_, _, err := conn.ReadMessage()
+			typ, _, err := conn.ReadMessage()
 			if err != nil {
-				break
+				// 基本上都是连接出了问题
+				return
+			}
+			switch typ {
+			case websocket.CloseMessage:
+				conn.Close()
+			default:
 			}
 		}
 	}
