@@ -965,3 +965,30 @@ func (s *FileServer) getMimeType(ext string) string {
 		return "application/octet-stream"
 	}
 }
+
+// FileChangeMessage 文件变更消息
+type FileChangeMessage struct {
+	Type      string `json:"type"`
+	FileId    int64  `json:"fileId"`
+	UserId    int32  `json:"userId"`
+	DeviceId  string `json:"deviceId"`
+	Operation string `json:"operation"`
+	Data      []byte `json:"data,omitempty"`
+	Name      string `json:"name,omitempty"`
+}
+
+// HandleFileChange 处理文件变更消息
+func (s *FileServer) HandleFileChange(ctx context.Context, msg *FileChangeMessage) (*file.UpdateFileResponse, error) {
+	switch msg.Operation {
+	case "update":
+		return s.UpdateFile(ctx, &file.UpdateFileRequest{
+			FileId:   msg.FileId,
+			UserId:   msg.UserId,
+			Data:     msg.Data,
+			Name:     msg.Name,
+			DeviceId: msg.DeviceId,
+		})
+	default:
+		return nil, fmt.Errorf("unsupported operation: %s", msg.Operation)
+	}
+}
