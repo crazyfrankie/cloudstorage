@@ -464,7 +464,7 @@ func (s *FileServer) ResumeDownload(ctx context.Context, req *file.ResumeDownloa
 	}, nil
 }
 
-// UpdateFile 更新文件，包含版本冲突检测
+// UpdateFile 更新文件，包含版本冲突检测和增量更新支持
 func (s *FileServer) UpdateFile(ctx context.Context, req *file.UpdateFileRequest) (*file.UpdateFileResponse, error) {
 	// 获取当前文件信息
 	currentFile, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
@@ -472,9 +472,36 @@ func (s *FileServer) UpdateFile(ctx context.Context, req *file.UpdateFileRequest
 		return nil, err
 	}
 
-	// 检查是否存在版本冲突
-	if currentFile.DeviceId != "" && currentFile.DeviceId != req.DeviceId {
-		// 如果文件已被其他设备修改，返回冲突信息
+	// 检查版本冲突
+	if int64(currentFile.Version) > req.BaseVersion {
+		// 文件已被更新，需要处理冲突
+		// 获取从客户端基础版本到当前版本的所有变更
+		changes, err := s.repo.GetFileChanges(ctx, req.FileId, req.BaseVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		// 转换为 protobuf 格式的变更列表
+		neededChanges := make([]*file.FileChange, 0, len(changes))
+		for _, change := range changes {
+			operation := file.ChangeOperation_INSERT
+			switch change.Operation {
+			case dao.Insert:
+				operation = file.ChangeOperation_INSERT
+			case dao.Delete:
+				operation = file.ChangeOperation_DELETE
+			case dao.Update:
+				operation = file.ChangeOperation_UPDATE
+			}
+
+			neededChanges = append(neededChanges, &file.FileChange{
+				Operation: operation,
+				Position:  change.Position,
+				Length:    change.Length,
+				Content:   change.Content,
+			})
+		}
+
 		return &file.UpdateFileResponse{
 			File: &file.File{
 				Id:             int32(currentFile.Id),
@@ -489,57 +516,157 @@ func (s *FileServer) UpdateFile(ctx context.Context, req *file.UpdateFileRequest
 				LastModifiedBy: currentFile.LastModifiedBy,
 			},
 			HasConflict:     true,
-			ConflictMessage: fmt.Sprintf("文件已被设备 %s 修改，请先同步最新版本", currentFile.DeviceId),
+			ConflictMessage: fmt.Sprintf("文件已被更新到版本 %d，请先同步最新版本", currentFile.Version),
+			CurrentVersion:  int64(currentFile.Version),
+			NeededChanges:   neededChanges,
 		}, nil
 	}
 
-	// 更新文件内容
-	err = s.saveFile(currentFile.Path, req.Data)
-	if err != nil {
-		return nil, err
-	}
+	// 根据是否为增量更新采取不同处理策略
+	if req.IsIncremental && len(req.Changes) > 0 {
+		// 增量更新处理
+		// 将 protobuf 格式的变更转为 dao 格式
+		daoChanges := make([]dao.FileChange, 0, len(req.Changes))
+		newVersion := int64(currentFile.Version) + 1
 
-	// 更新文件元数据
-	now := time.Now().Unix()
-	currentFile.Version++
-	currentFile.DeviceId = req.DeviceId
-	currentFile.LastModifiedBy = req.DeviceId
-	currentFile.Utime = now
-	if req.Name != "" {
-		currentFile.Name = req.Name
-	}
+		for _, change := range req.Changes {
+			var operation dao.ChangeOperation
+			switch change.Operation {
+			case file.ChangeOperation_INSERT:
+				operation = dao.Insert
+			case file.ChangeOperation_DELETE:
+				operation = dao.Delete
+			case file.ChangeOperation_UPDATE:
+				operation = dao.Update
+			}
 
-	// 更新数据库记录
-	err = s.repo.UpdateFile(ctx, &currentFile)
-	if err != nil {
-		return nil, err
-	}
-
-	// 异步更新 MinIO
-	go func() {
-		newCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		_, err := s.minio.PutToBucket(newCtx, s.minio.BucketName, currentFile.Name, currentFile.Size, req.Data)
-		if err != nil {
-			log.Printf("failed to update oss:%s", currentFile.Name)
+			daoChanges = append(daoChanges, dao.FileChange{
+				FileID:    req.FileId,
+				Version:   newVersion,
+				Operation: operation,
+				Position:  change.Position,
+				Length:    change.Length,
+				Content:   change.Content,
+				DeviceID:  req.DeviceId,
+			})
 		}
-	}()
 
-	return &file.UpdateFileResponse{
-		File: &file.File{
-			Id:             int32(currentFile.Id),
-			Name:           currentFile.Name,
-			FolderId:       currentFile.FolderId,
-			UserId:         currentFile.UserId,
-			Size:           currentFile.Size,
-			Type:           currentFile.Type,
-			Utime:          time.Unix(currentFile.Utime, 0).Format(time.RFC3339),
-			Version:        currentFile.Version,
-			DeviceId:       currentFile.DeviceId,
-			LastModifiedBy: currentFile.LastModifiedBy,
-		},
-		HasConflict: false,
-	}, nil
+		// 保存变更记录
+		for _, change := range daoChanges {
+			if err := s.repo.SaveFileChange(ctx, &change); err != nil {
+				return nil, err
+			}
+		}
+
+		// 应用变更到文件
+		if err := s.repo.ApplyFileChanges(ctx, req.FileId, daoChanges); err != nil {
+			return nil, err
+		}
+
+		// 获取更新后的文件
+		updatedFile, err := s.repo.GetFile(ctx, req.FileId, req.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		// 如果有文件名变更
+		if req.Name != "" && req.Name != updatedFile.Name {
+			updatedFile.Name = req.Name
+			if err := s.repo.UpdateFile(ctx, &updatedFile); err != nil {
+				return nil, err
+			}
+		}
+
+		// 返回更新后的文件信息
+		return &file.UpdateFileResponse{
+			File: &file.File{
+				Id:             int32(updatedFile.Id),
+				Name:           updatedFile.Name,
+				FolderId:       updatedFile.FolderId,
+				UserId:         updatedFile.UserId,
+				Size:           updatedFile.Size,
+				Type:           updatedFile.Type,
+				Utime:          time.Unix(updatedFile.Utime, 0).Format(time.RFC3339),
+				Version:        updatedFile.Version,
+				DeviceId:       updatedFile.DeviceId,
+				LastModifiedBy: updatedFile.LastModifiedBy,
+			},
+			HasConflict:    false,
+			CurrentVersion: int64(updatedFile.Version),
+		}, nil
+	} else {
+		// 全量更新处理
+		// 检查设备ID是否匹配
+		if currentFile.DeviceId != "" && currentFile.DeviceId != req.DeviceId {
+			// 如果文件已被其他设备修改，返回冲突信息
+			return &file.UpdateFileResponse{
+				File: &file.File{
+					Id:             int32(currentFile.Id),
+					Name:           currentFile.Name,
+					FolderId:       currentFile.FolderId,
+					UserId:         currentFile.UserId,
+					Size:           currentFile.Size,
+					Type:           currentFile.Type,
+					Utime:          time.Unix(currentFile.Utime, 0).Format(time.RFC3339),
+					Version:        currentFile.Version,
+					DeviceId:       currentFile.DeviceId,
+					LastModifiedBy: currentFile.LastModifiedBy,
+				},
+				HasConflict:     true,
+				ConflictMessage: fmt.Sprintf("文件已被设备 %s 修改，请先同步最新版本", currentFile.DeviceId),
+				CurrentVersion:  int64(currentFile.Version),
+			}, nil
+		}
+
+		// 更新文件内容
+		err = s.saveFile(currentFile.Path, req.Data)
+		if err != nil {
+			return nil, err
+		}
+
+		// 更新文件元数据
+		now := time.Now().Unix()
+		currentFile.Version++
+		currentFile.DeviceId = req.DeviceId
+		currentFile.LastModifiedBy = req.DeviceId
+		currentFile.Utime = now
+		if req.Name != "" {
+			currentFile.Name = req.Name
+		}
+
+		// 更新数据库记录
+		err = s.repo.UpdateFile(ctx, &currentFile)
+		if err != nil {
+			return nil, err
+		}
+
+		// 异步更新 MinIO
+		go func() {
+			newCtx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			_, err := s.minio.PutToBucket(newCtx, s.minio.BucketName, currentFile.Name, currentFile.Size, req.Data)
+			if err != nil {
+				log.Printf("failed to update oss:%s", currentFile.Name)
+			}
+		}()
+
+		return &file.UpdateFileResponse{
+			File: &file.File{
+				Id:             int32(currentFile.Id),
+				Name:           currentFile.Name,
+				FolderId:       currentFile.FolderId,
+				UserId:         currentFile.UserId,
+				Size:           currentFile.Size,
+				Type:           currentFile.Type,
+				Utime:          time.Unix(currentFile.Utime, 0).Format(time.RFC3339),
+				Version:        currentFile.Version,
+				DeviceId:       currentFile.DeviceId,
+				LastModifiedBy: currentFile.LastModifiedBy,
+			},
+			HasConflict:    false,
+			CurrentVersion: int64(currentFile.Version),
+		}, nil
+	}
 }
 
 // calculateTotalSize 计算总大小

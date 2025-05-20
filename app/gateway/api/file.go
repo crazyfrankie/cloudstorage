@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/crazyfrankie/gem/gerrors"
 	"io"
 	"net/http"
 	"net/url"
@@ -31,6 +33,7 @@ func (h *FileHandler) RegisterRoute(r *gin.Engine) {
 	{
 		fileGroup.POST("/upload", h.Upload())
 		fileGroup.POST("/upload/chunk", h.UploadChunk())
+		fileGroup.POST("/update", h.UpdateFile())
 		fileGroup.GET("/download/:id", h.Download())
 		fileGroup.GET("/preview/:id", h.Preview())
 		fileGroup.POST("/download/task-queue", h.BatchDownloadFiles())
@@ -71,6 +74,11 @@ func (h *FileHandler) Upload() gin.HandlerFunc {
 		strs := strings.Split(name, ".")
 		typ := strs[len(strs)-1] // 文件类型
 		size := header.Size      // 文件大小
+
+		if size > consts.SmallFileSizeLimit {
+			response.Error(c, gerrors.NewBizError(40001, "Payload Too Large"))
+			return
+		}
 
 		claims := c.MustGet("claims")
 		claim, _ := claims.(*mws.Claim)
@@ -181,35 +189,105 @@ func (h *FileHandler) UpdateFile() gin.HandlerFunc {
 			return
 		}
 
-		f, header, err := c.Request.FormFile("file")
-		if err != nil {
-			response.Error(c, err)
-			return
-		}
-		defer f.Close()
-
-		data, err := io.ReadAll(f)
-		if err != nil {
-			response.Error(c, err)
-			return
-		}
-
 		claims := c.MustGet("claims").(*mws.Claim)
-		resp, err := h.cli.UpdateFile(c.Request.Context(), &file.UpdateFileRequest{
-			FileId:   fileId,
-			UserId:   claims.UserId,
-			Data:     data,
-			Name:     header.Filename,
-			DeviceId: deviceId,
-		})
 
+		// 解析基础版本，这是用于增量更新的必要参数
+		baseVersion, err := strconv.ParseInt(c.PostForm("baseVersion"), 10, 64)
+		if err != nil {
+			baseVersion = 0 // 如果未提供，默认为0
+		}
+
+		// 检查是否为增量更新
+		isIncremental := c.PostForm("isIncremental") == "true"
+
+		// 准备请求对象
+		req := &file.UpdateFileRequest{
+			FileId:        fileId,
+			UserId:        claims.UserId,
+			DeviceId:      deviceId,
+			BaseVersion:   baseVersion,
+			IsIncremental: isIncremental,
+		}
+
+		// 如果提供了新文件名，添加到请求中
+		if newName := c.PostForm("name"); newName != "" {
+			req.Name = newName
+		}
+
+		if isIncremental {
+			var changeList []struct {
+				Operation string `json:"operation"`
+				Position  int64  `json:"position"`
+				Length    int64  `json:"length"`
+				Content   string `json:"content"`
+			}
+
+			changesStr := c.PostForm("changes")
+			if changesStr != "" {
+				if err := json.Unmarshal([]byte(changesStr), &changeList); err != nil {
+					response.Error(c, fmt.Errorf("invalid changes format: %v", err))
+					return
+				}
+
+				changes := make([]*file.FileChange, 0, len(changeList))
+				for _, ch := range changeList {
+					var op file.ChangeOperation
+					switch strings.ToUpper(ch.Operation) {
+					case "INSERT":
+						op = file.ChangeOperation_INSERT
+					case "DELETE":
+						op = file.ChangeOperation_DELETE
+					case "UPDATE":
+						op = file.ChangeOperation_UPDATE
+					default:
+						response.Error(c, fmt.Errorf("unknown operation type: %s", ch.Operation))
+						return
+					}
+
+					changes = append(changes, &file.FileChange{
+						Operation: op,
+						Position:  ch.Position,
+						Length:    ch.Length,
+						Content:   []byte(ch.Content),
+					})
+				}
+
+				req.Changes = changes
+			}
+		} else {
+			// 处理全量更新
+			f, _, err := c.Request.FormFile("file")
+			if err != nil {
+				response.Error(c, err)
+				return
+			}
+			defer f.Close()
+
+			data, err := io.ReadAll(f)
+			if err != nil {
+				response.Error(c, err)
+				return
+			}
+
+			req.Data = data
+		}
+
+		resp, err := h.cli.UpdateFile(c.Request.Context(), req)
 		if err != nil {
 			response.Error(c, err)
 			return
 		}
 
 		if resp.HasConflict {
-			response.Error(c, errors.New(resp.ConflictMessage))
+			c.JSON(http.StatusConflict, gin.H{
+				"code": 40901,
+				"msg":  resp.ConflictMessage,
+				"data": gin.H{
+					"currentVersion": resp.CurrentVersion,
+					"neededChanges":  resp.NeededChanges,
+					"file":           resp.File,
+				},
+			})
 			return
 		}
 

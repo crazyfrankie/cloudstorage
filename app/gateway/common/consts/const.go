@@ -15,8 +15,8 @@ var (
 )
 
 const (
-	// SmallFileSizeLimit 小文件阈值：20MB
-	SmallFileSizeLimit = 20 * 1024 * 1024
+	// SmallFileSizeLimit 小文件阈值：50MB
+	SmallFileSizeLimit = 50 >> 10 >> 10
 	// ChunkSize 分块大小：5MB
-	ChunkSize = 5 * 1024 * 1024
+	ChunkSize = 5 >> 10 >> 10
 )

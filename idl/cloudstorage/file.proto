@@ -280,15 +280,35 @@ message GetUserFileStoreResponse {
 message UpdateFileRequest {
   int64 file_id = 1;
   int32 user_id = 2;
-  bytes data = 3;
+  bytes data = 3;  // 完整文件内容（用于全量更新，与changes字段二选一）
   string name = 4;
   string device_id = 5;  // 设备ID
+  int64 base_version = 6;  // 基础版本号，客户端基于哪个版本进行的修改
+  repeated FileChange changes = 7;  // 文件变更列表（用于增量更新，与data字段二选一）
+  bool is_incremental = 8;  // 是否是增量更新
 }
 
+enum ChangeOperation {
+  INSERT = 0;  // 插入内容
+  DELETE = 1;  // 删除内容
+  UPDATE = 2;  // 更新内容
+}
+
+// 文件变更记录
+message FileChange {
+  ChangeOperation operation = 1;  // 操作类型
+  int64 position = 2;  // 变更的起始位置（字节偏移量）
+  int64 length = 3;  // 原内容长度（用于Delete和Update操作）
+  bytes content = 4;  // 新内容（用于Insert和Update操作）
+}
+
+// 不修改 UpdateFileResponse
 message UpdateFileResponse {
   File file = 1;
   bool has_conflict = 2;  // 是否存在冲突
   string conflict_message = 3;  // 冲突信息
+  int64 current_version = 4;  // 当前最新版本号
+  repeated FileChange needed_changes = 5;  // 客户端需要应用的变更（冲突时提供）
 }
 
 service FileService {
