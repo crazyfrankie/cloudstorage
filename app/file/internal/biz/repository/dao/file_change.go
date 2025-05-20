@@ -37,7 +37,7 @@ func (d *UploadDao) ApplyFileChanges(ctx context.Context, fileID int64, changes 
 		// 应用变更到文件
 		for _, change := range changes {
 			// 更新文件版本号
-			if change.Version > file.Version {
+			if change.Version > int64(file.Version) {
 				file.Version = int32(change.Version)
 			}
 
